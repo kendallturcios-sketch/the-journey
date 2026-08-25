@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Journey — ARISE Miami</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0B2340;--teal:#12A5B8;--deep:#082A2E;--indigo:#3F32A8;--amber:#B0741A;
+--paper:#F7F9FA;--line:#DDE5E9;--muted:#5E7280;--d:"Archivo",Arial,sans-serif;--b:"Source Sans 3",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--b);background:var(--paper);color:var(--ink);padding:0 0 70px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px}
+header{background:linear-gradient(118deg,var(--deep) 0%,#0E5A66 42%,var(--indigo) 100%);
+ color:#fff;padding:46px 18px 40px;position:relative;overflow:hidden;margin-bottom:26px}
+header svg.br{position:absolute;inset:0;width:100%;height:100%;opacity:.15}
+header .in{max-width:760px;margin:0 auto;position:relative}
+.eye{font-family:var(--d);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#7FE3EE}
+header h1{font-family:var(--d);font-size:44px;font-weight:800;letter-spacing:-.02em;
+ text-transform:uppercase;line-height:.98;margin:9px 0 12px}
+header p{font-size:16px;line-height:1.55;color:#CFE6EA;max-width:52ch}
+h2{font-family:var(--d);font-size:11px;font-weight:700;letter-spacing:.2em;
+ text-transform:uppercase;color:var(--muted);margin:30px 0 13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(316px,1fr));gap:13px}
+a.card{display:block;background:#fff;border:1px solid var(--line);border-radius:16px;
+ padding:19px 21px;text-decoration:none;color:var(--ink);transition:transform .16s,box-shadow .16s}
+a.card:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(11,35,64,.1)}
+a.card.amber{border-color:#E7DCCB;background:#FBF8F3}
+.tag{font-family:var(--d);font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+ color:var(--teal);display:block}
+a.card.amber .tag{color:var(--amber)}
+a.card h3{font-family:var(--d);font-size:19px;font-weight:800;margin:5px 0 6px}
+a.card p{font-size:13.5px;line-height:1.5;color:var(--muted)}
+.go{font-family:var(--d);font-size:12px;font-weight:700;color:var(--teal);margin-top:11px;display:block}
+a.card.amber .go{color:var(--amber)}
+.note{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px 20px;font-size:14.5px;
+ line-height:1.6;color:#3A4F62;margin-top:12px}
+.note b{font-family:var(--d);color:var(--ink)}
+.note code{background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:13px}
+footer{text-align:center;font-size:12.5px;color:var(--muted);margin-top:34px;line-height:1.6}
+</style></head><body>
+<header>
+ <svg class="br" viewBox="0 0 800 260" preserveAspectRatio="none">
+  <path d="M-20 210 C 180 150, 300 250, 600 170 S 840 120 860 150" stroke="#fff" stroke-width="30" fill="none" opacity=".33" stroke-linecap="round"/>
+  <path d="M-10 60 C 160 20, 380 110, 600 40" stroke="#fff" stroke-width="15" fill="none" opacity=".2" stroke-linecap="round"/>
+  <path d="M240 -40 L400 140 L80 140 Z" fill="#fff" opacity=".07"/></svg>
+ <div class="in"><div class="eye">Arise Miami</div><h1>The Journey</h1>
+ <p>A four-level discipleship track, built as an app. Free to use, copy and adapt for your church.</p></div>
+</header>
+<div class="wrap">
+ <h2>English</h2>
+ <div class="grid">
+  <a class="card" href="en/participant/"><span class="tag">For participants</span>
+   <h3>The Journey</h3><p>All four levels, worksheets, covenant signing and ministry sign-up.</p>
+   <span class="go">Open &rsaquo;</span></a>
+  <a class="card amber" href="en/facilitator/"><span class="tag">For facilitators</span>
+   <h3>Leader Copy</h3><p>Every answer filled in, plus discussion prompts and group instructions.</p>
+   <span class="go">Open &rsaquo;</span></a>
+ </div>
+ <h2>Español</h2>
+ <div class="grid">
+  <a class="card" href="es/participant/"><span class="tag">Para participantes</span>
+   <h3>El Camino</h3><p>Los cuatro niveles, con las Escrituras en Reina-Valera 1909.</p>
+   <span class="go">Abrir &rsaquo;</span></a>
+  <a class="card amber" href="es/facilitator/"><span class="tag">Para facilitadores</span>
+   <h3>Copia del Facilitador</h3><p>Con todas las respuestas, preguntas de discusión e instrucciones.</p>
+   <span class="go">Abrir &rsaquo;</span></a>
+ </div>
+ <h2>For pastors adapting this</h2>
+ <div class="note">
+  These are single HTML files. Nothing to install, no server, no accounts &mdash; open one and it works,
+  even offline. Add it to a phone's home screen and it behaves like an app.<br><br>
+  <b>To make it yours:</b> click <b>Fork</b> at the top of the GitHub repo, then edit the content near the
+  top of each file. Church name, ministries, leaders, session code and every lesson are plain text you can
+  change without touching the code.<br><br>
+  <b>The session code is</b> <code>4827</code> in this demo version.<br><br>
+  <b>Scripture</b> is Berean Standard Bible in English and Reina-Valera 1909 in Spanish &mdash; both public
+  domain, so there is nothing to license and it works with no internet.<br><br>
+  <b>The <code>db</code> folder</b> holds the database schema if you want to run this for real, with
+  accounts, saved progress and notifications to ministry leaders.
+ </div>
+ <footer>Built for ARISE Miami SDA Church &middot; free to copy and adapt<br>
+ Scripture: Berean Standard Bible &amp; Reina-Valera 1909, both public domain</footer>
+</div></body></html>

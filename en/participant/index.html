@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Journey</title>
+<meta name="apple-mobile-web-app-title" content="The Journey">
+<meta name="application-name" content="The Journey">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#082A2E">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0B2340;--teal:#12A5B8;--deep:#082A2E;--grass:#4CAF7D;--amber:#B0741A;
+--paper:#F7F9FA;--line:#DDE5E9;--muted:#5E7280;--indigo:#3F32A8;
+--d:"Archivo",Arial,sans-serif;--b:"Source Sans 3",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
+body{font-family:var(--b);background:#1a2226;display:flex;align-items:center;justify-content:center;
+ padding:22px 12px;color:var(--ink);-webkit-font-smoothing:antialiased}
+.stage{width:100%;max-width:428px}
+.phone{background:var(--paper);border-radius:34px;overflow:hidden;
+ box-shadow:0 30px 70px rgba(0,0,0,.5);height:min(880px,90vh);display:flex;flex-direction:column}
+.bar{background:var(--deep);color:#fff;padding:15px 18px 13px;display:flex;align-items:center;gap:11px;flex:0 0 auto}
+.bar .mark{width:25px;height:25px;flex:0 0 auto}
+.bar h1{font-family:var(--d);font-size:13.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
+.bar .back{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;padding:0 3px 0 0;font-family:var(--b)}
+.bar .sp{margin-left:auto;font-size:11.5px;color:#89A7AC;letter-spacing:.05em}
+.pw{height:3px;background:#E4EBEE;flex:0 0 auto}.pw i{display:block;height:100%;background:var(--teal);width:0;transition:width .35s}
+.sc{flex:1;overflow-y:auto;overscroll-behavior:contain}.sc::-webkit-scrollbar{width:0}
+.pad{padding:20px 19px 46px}
+.hero{position:relative;padding:28px 19px 32px;color:#fff;overflow:hidden;
+ background:linear-gradient(118deg,var(--deep) 0%,#0E5A66 42%,var(--indigo) 100%)}
+.hero svg.br{position:absolute;inset:0;width:100%;height:100%;opacity:.16}
+.hero .in{position:relative}
+.eye{font-family:var(--d);font-size:10px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#7FE3EE}
+.hero h2{font-family:var(--d);font-weight:800;font-size:36px;line-height:.98;letter-spacing:-.02em;text-transform:uppercase;margin:7px 0 9px}
+.hero p{font-size:14px;line-height:1.5;color:#CFE6EA;max-width:30ch}
+.next{margin:-17px 15px 2px;position:relative;z-index:2;background:#fff;border-radius:15px;
+ padding:13px 15px;box-shadow:0 8px 24px rgba(8,42,46,.14);display:flex;align-items:center;gap:12px}
+.next .dot{width:9px;height:9px;border-radius:50%;background:var(--grass);flex:0 0 auto}
+.next b{display:block;font-family:var(--d);font-size:13px}.next span{font-size:12px;color:var(--muted)}
+.st{font-family:var(--d);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:24px 0 11px}
+.card{display:flex;gap:13px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);
+ background:#fff;border-radius:15px;padding:14px 15px;margin-bottom:10px;cursor:pointer;font-family:var(--b);
+ transition:transform .16s,box-shadow .16s}
+.card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(11,35,64,.09)}
+.card.locked{background:#F0F3F5;border-style:dashed;cursor:default}
+.card.locked:hover{transform:none;box-shadow:none}
+.card .ic{width:44px;height:44px;border-radius:50%;flex:0 0 auto;background:var(--ink);display:grid;place-items:center}
+.card.locked .ic{background:#B8C6CE}.card.done .ic{background:var(--grass)}
+.card .ic svg{width:22px;height:22px;fill:#fff}
+.card .me{flex:1;min-width:0}
+.card .lv{font-family:var(--d);font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--teal)}
+.card.locked .lv{color:#93A5AE}
+.card .tt{font-family:var(--d);font-size:15.5px;font-weight:700;margin:2px 0 3px}
+.card .su{font-size:12.5px;color:var(--muted);line-height:1.35}
+.card .dy{font-size:10.5px;color:var(--muted);margin-top:5px}
+.card .cv{color:#B8C6CE;font-size:19px}
+.lh{padding:22px 19px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.lh .lv{font-family:var(--d);font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--teal)}
+.lh h2{font-family:var(--d);font-size:25px;font-weight:800;letter-spacing:-.01em;margin:5px 0 7px}
+.lh p{font-size:13px;color:var(--muted);line-height:1.5}
+.cnt{margin-top:12px;display:inline-block;font-size:11.5px;color:var(--muted);background:var(--paper);
+ border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+.saved{margin-top:12px;display:inline-block;font-size:12px;font-weight:600;color:#2E7D55;
+ background:#EDF8F2;border:1px solid #BFE6D3;border-radius:999px;padding:5px 13px}
+.blk{margin-bottom:19px}
+.blk.h{font-family:var(--d);font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+ margin:32px 0 13px;padding-bottom:8px;border-bottom:2px solid var(--ink)}
+.blk.h:first-child{margin-top:4px}
+.blk.t{font-size:15.5px;line-height:1.62;color:#22384F}
+.blk.s{border-left:3px solid var(--teal);padding:2px 0 2px 14px}
+.blk.s .ref{font-family:var(--d);font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}
+.blk.s .ver{font-size:8.5px;letter-spacing:.14em;color:#9AB0BA;margin-left:7px;border:1px solid var(--line);
+ border-radius:4px;padding:1px 5px;vertical-align:1px}
+.blk.s .vt{font-size:15px;line-height:1.6;color:#3A4F62;font-style:italic;margin-top:4px}
+.blk.s .vt.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.blk.s .more{background:none;border:0;padding:5px 0 0;cursor:pointer;font-family:var(--b);font-size:12.5px;color:var(--teal);font-weight:600}
+.blk.f{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;font-size:16px;line-height:2.1;color:#22384F}
+.blk.f.solved{border-color:#BFE6D3;background:#F6FCF9}
+.slot{display:inline-block;position:relative;min-width:98px;margin:0 2px}
+.slot input{font-family:var(--b);font-size:16px;font-weight:700;color:var(--ink);width:100%;border:0;
+ border-bottom:2.5px solid #C6D3DA;background:transparent;padding:0 3px 2px;text-align:center;outline:none;transition:border-color .18s}
+.slot input:focus{border-bottom-color:var(--teal)}
+.slot.ok input{color:var(--grass);border-bottom-color:var(--grass)}
+.slot.rev input{color:#A8814A;border-bottom-color:#D9BE8E}
+.slot.bad input{border-bottom-color:#D2554E;animation:nu .3s}
+@keyframes nu{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.fn{margin-top:10px;font-size:12.5px;line-height:1.4;min-height:16px;color:var(--muted)}
+.fn.err{color:#C0453E}.fn.rev{color:#A8814A}
+.box{background:#fff;border:1px solid var(--line);border-radius:15px;padding:19px 18px;margin-bottom:19px}
+.box h3{font-family:var(--d);font-size:17px;font-weight:800;margin-bottom:7px}
+.box p{font-size:14px;line-height:1.55;color:#3A4F62}
+.box.hi{border-color:var(--teal);background:linear-gradient(160deg,#F2FBFC,#fff)}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:12px;
+ padding:12px 13px;margin-top:9px;cursor:pointer;font-size:14.5px;line-height:1.35;background:#fff}
+.opt.on{border-color:var(--grass);background:#F6FCF9}
+.opt .rd{width:19px;height:19px;border-radius:50%;border:2px solid #C6D3DA;flex:0 0 auto;margin-top:1px;position:relative}
+.opt.on .rd{border-color:var(--grass)}
+.opt.on .rd::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--grass)}
+.gchip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:#fff;
+ border-radius:999px;padding:8px 13px;margin:0 6px 7px 0;font-size:13.5px;cursor:pointer;font-family:var(--b)}
+.gchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.gchip .rk{width:17px;height:17px;border-radius:50%;background:var(--teal);color:#fff;font-size:10px;
+ font-family:var(--d);font-weight:700;display:grid;place-items:center}
+.gitem{border-bottom:1px solid var(--line);padding:13px 0}
+.gitem:last-child{border-bottom:0}
+.gitem b{font-family:var(--d);font-size:14.5px}
+.gitem p{font-size:13.5px;color:#3A4F62;line-height:1.5;margin:3px 0 4px}
+.gitem .r{font-size:11.5px;color:var(--teal);font-family:var(--d);letter-spacing:.08em;text-transform:uppercase}
+.gitem .ver{font-family:var(--b);font-size:8.5px;letter-spacing:.14em;color:#9AB0BA;margin-left:7px;
+ border:1px solid var(--line);border-radius:4px;padding:1px 5px;vertical-align:1px;text-transform:none}
+.gscrip{font-size:14px;line-height:1.6;color:#3A4F62;font-style:italic;margin-top:6px;
+ padding-left:12px;border-left:2px solid #C9EDF2}
+textarea{width:100%;min-height:110px;border:1.5px solid var(--line);border-radius:12px;padding:12px;
+ font-family:var(--b);font-size:15px;line-height:1.55;color:var(--ink);resize:vertical;outline:none;background:#fff}
+textarea:focus{border-color:var(--teal)}
+.cvsec{border-left:3px solid var(--teal);padding-left:14px;margin:16px 0}
+.cvsec b{font-family:var(--d);font-size:14.5px;display:block;margin-bottom:6px}
+.cvsec li{font-size:14px;color:#3A4F62;line-height:1.6;list-style:none;padding-left:15px;position:relative}
+.cvsec li::before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--teal)}
+.cvsec .rf{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.rchip{font-family:var(--b);font-size:11.5px;font-weight:600;color:var(--teal);background:#F2FBFC;
+ border:1px solid #C9EDF2;border-radius:999px;padding:4px 10px;cursor:pointer}
+.rchip:hover{background:#E1F6F9}
+.rchip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.rtxt{display:none;font-size:14px;line-height:1.6;color:#3A4F62;font-style:italic;
+ margin-top:9px;padding-left:12px;border-left:2px solid #C9EDF2}
+.rtxt.show{display:block}
+.rtxt b{display:block;font-family:var(--d);font-style:normal;font-size:10.5px;letter-spacing:.1em;
+ text-transform:uppercase;color:var(--teal);margin-bottom:3px}
+#sig{border:2px dashed #C6D3DA;border-radius:12px;background:#fff;width:100%;height:150px;touch-action:none;display:block}
+#sig.has{border-style:solid;border-color:var(--grass)}
+.mcard{border:1.5px solid var(--line);border-radius:13px;padding:13px 14px;margin-bottom:9px;background:#fff}
+.mcard.on{border-color:var(--grass);background:#F6FCF9}
+.mcard .hd{display:flex;align-items:center;gap:9px;cursor:pointer}
+.mcard .nm{font-family:var(--d);font-size:15px;font-weight:700;flex:1}
+.mcard .bl{font-size:12.5px;color:var(--muted);line-height:1.4;margin:5px 0 0 0}
+.why{font-family:var(--d);font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+ color:#0A7A88;background:#E6F7FA;border-radius:5px;padding:3px 8px;display:inline-block;margin-top:7px}
+.sug{font-family:var(--d);font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+ background:#E6F7FA;color:#0A7A88;border-radius:4px;padding:2px 6px}
+.roles{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);display:none}
+.mcard.open .roles{display:block}
+.rrow{display:flex;gap:9px;align-items:center;font-size:13.5px;color:#3A4F62;padding:6px 0;cursor:pointer}
+.cb{width:18px;height:18px;border:2px solid #C6D3DA;border-radius:5px;flex:0 0 auto;position:relative;background:#fff}
+.cb.on{background:var(--grass);border-color:var(--grass)}
+.cb.on::after{content:"";position:absolute;left:5px;top:1px;width:4px;height:9px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(43deg)}
+.btn{display:block;width:100%;margin-top:18px;padding:14px;border:0;border-radius:12px;background:var(--ink);
+ color:#fff;font-family:var(--d);font-size:13.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.btn:hover{background:#123055}.btn:disabled{background:#B8C6CE;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--muted);border:1.5px solid var(--line)}
+.btn.teal{background:var(--teal);color:#04252A}
+.fin{padding:36px 24px;text-align:center}
+.fin h2{font-family:var(--d);font-size:27px;font-weight:800;line-height:1.06}
+.fin p{font-size:14.5px;color:var(--muted);line-height:1.55;margin-top:10px}
+.rule{width:42px;height:3px;background:var(--teal);margin:16px auto}
+.codebox{display:flex;gap:10px;justify-content:center;margin:26px 0 12px}
+.digit{width:54px;height:66px;text-align:center;font-family:var(--d);font-size:29px;font-weight:700;color:var(--ink);
+ border:2px solid var(--line);border-radius:13px;background:#fff;outline:none}
+.digit:focus{border-color:var(--teal)}.digit.bad{border-color:#D2554E;animation:nu .3s}
+.cn{font-size:12.5px;color:var(--muted);line-height:1.45;min-height:34px}.cn.err{color:#C0453E;font-weight:600}
+.note{background:#FFF6E5;border:1px solid #F0DCB4;border-radius:12px;padding:11px 13px;font-size:13px;color:#8A6420;line-height:1.45}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body><div class="stage"><div class="phone">
+<div class="bar">
+  <button class="back" id="back" style="display:none">&#8249;</button>
+  <svg class="mark" viewBox="0 0 40 40"><path d="M20 3 L38 36 H2 Z" fill="#12A5B8"/><path d="M20 15 L28 30 H21 L24.5 24 L20 24 Z" fill="#082A2E"/></svg>
+  <h1 id="bt">The Journey</h1><span class="sp" id="bs">Arise Miami</span><span class="sp" style="margin-left:8px;opacity:.55;font-size:10px">v2.8 preview</span>
+</div>
+<div class="pw"><i id="pg"></i></div>
+<div class="sc" id="sc"></div>
+</div></div>
+<script>
+const DATA={"L": [{"n": 1, "title": "Discover Your Purpose", "sub": "The why and what of biblical Christianity", "sab": "First Sabbath", "icon": "heart", "blocks": [{"t": "h", "x": "Part 1: What Are You Made For?"}, {"t": "s", "ref": "John 17:3", "v": "Now this is eternal life, that they may know You, the only true God, and Jesus Christ, whom You have sent."}, {"t": "s", "ref": "Genesis 2:18", "v": "The LORD God also said, \u201cIt is not good for the man to be alone. I will make for him a suitable helper.\u201d"}, {"t": "f", "x": "You were made for relationship \u2014 with ___ and ___.", "a": [["god"], ["people"]]}, {"t": "h", "x": "Part 2: What's the Problem?"}, {"t": "s", "ref": "Romans 3:23", "v": "for all have sinned and fall short of the glory of God,"}, {"t": "s", "ref": "Romans 6:23", "v": "For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord."}, {"t": "f", "x": "Sin broke our relationships with ___, ___, and ___.", "a": [["god"], ["self"], ["others"]]}, {"t": "f", "x": "Life is about ___ relationship with God and with people, and growing in maturity.", "a": [["restoring", "restore"]]}, {"t": "h", "x": "What Is Spiritual Maturity?"}, {"t": "t", "x": "Spiritual maturity is not what you know, but what you do with what you know."}, {"t": "h", "x": "Romans 6:23 \u2014 Three Terms"}, {"t": "f", "x": "A ___ is what we deserve.", "a": [["wage"]]}, {"t": "f", "x": "A ___ is undeserved grace \u2014 something you don't deserve, given to you.", "a": [["gift"]]}, {"t": "f", "x": "A ___ is a legal declaration of guilty versus not guilty.", "a": [["verdict"]]}, {"t": "h", "x": "Part 3: God's Part and My Part"}, {"t": "s", "ref": "Titus 2:11-13", "v": "11 For the grace of God has appeared, bringing salvation to everyone. 12 It instructs us to renounce ungodliness and worldly passions, and to live sensible, upright, and godly lives in the present age, 13 as we await the blessed hope and glorious appearance of our great God and Savior Jesus Christ."}, {"t": "t", "x": "Grace goes before. Jesus is the first mover and does His part first."}, {"t": "s", "ref": "Romans 5:8", "v": "But God proves His love for us in this: While we were still sinners, Christ died for us."}, {"t": "t", "x": "Justification is the act by which God moves a willing person from the state of sin to the state of grace."}, {"t": "f", "x": "Our part is to ___, to call on the name of the Lord.", "a": [["believe"]]}, {"t": "s", "ref": "Romans 10:9-13", "v": "9 that if you confess with your mouth, \u201cJesus is Lord,\u201d and believe in your heart that God raised Him from the dead, you will be saved. 10 For with your heart you believe and are justified, and with your mouth you confess and are saved. 11 It is just as the Scripture says: \u201cAnyone who believes in Him will never be put to shame.\u201d 12 For there is no difference between Jew and Greek: The same Lord is Lord of all, and gives richly to all who call on Him, 13 for, \u201cEveryone who calls on the name of the Lord will be saved.\u201d"}, {"t": "t", "x": "This is not a perfectly linear process \u2014 up, down, forward, backward."}, {"t": "h", "x": "Following Jesus"}, {"t": "s", "ref": "Titus 2:12", "v": "It instructs us to renounce ungodliness and worldly passions, and to live sensible, upright, and godly lives in the present age,"}, {"t": "t", "x": "We no longer have a sin problem \u2014 we are learning to be righteous."}, {"t": "s", "ref": "Romans 8:1", "v": "Therefore, there is now no condemnation for those who are in Christ Jesus."}, {"t": "t", "x": "Sanctification is the action or process of being freed from sin, or purified."}, {"t": "h", "x": "Part 4: Justification vs Sanctification"}, {"t": "t", "x": "Justification sets people free from sin's penalty; sanctification means being set free from sin's power."}, {"t": "t", "x": "Justification is something God does for us; sanctification is what God does with us."}, {"t": "t", "x": "Justification happens instantly at the moment someone is born again; sanctification happens gradually over a whole life."}, {"t": "h", "x": "Part 5: Next Step \u2014 Baptism"}, {"t": "t", "x": "Baptism is an outward sign of inward change \u2014 an outward expression of an inward reality."}, {"t": "t", "x": "The Greek word baptidzo means to submerge. Biblical baptism is by immersion."}, {"t": "s", "ref": "Matthew 28:18-20", "v": "18 Then Jesus came to them and said, \u201cAll authority in heaven and on earth has been given to Me. 19 Therefore go and make disciples of all nations, baptizing them in the name of the Father, and of the Son, and of the Holy Spirit, 20 and teaching them to obey all that I have commanded you. And surely I am with you always, even to the end of the age.\u201d"}, {"t": "s", "ref": "Acts 2:37-38", "v": "37 When the people heard this, they were cut to the heart and asked Peter and the other apostles, \u201cBrothers, what shall we do?\u201d 38 Peter replied, \u201cRepent and be baptized, every one of you, in the name of Jesus Christ for the forgiveness of your sins, and you will receive the gift of the Holy Spirit."}, {"t": "t", "x": "Who can be baptized? Anyone who believes and accepts the Gospel."}, {"t": "h", "x": "Part 6: The Gospel \u2014 4 Core Declarations"}, {"t": "f", "x": "God's Kingdom is ___.", "a": [["here"]]}, {"t": "f", "x": "Jesus is the ___, the ___ of the world.", "a": [["christ"], ["savior", "saviour"]]}, {"t": "f", "x": "Jesus ___ for our sins.", "a": [["died"]]}, {"t": "f", "x": "Jesus was ___ on the third day.", "a": [["resurrected", "risen"]]}, {"t": "h", "x": "3 Key Responses"}, {"t": "f", "x": "___, ___, and ___.", "a": [["repent"], ["believe"], ["follow"]]}, {"t": "s", "ref": "Mark 8:27-31", "v": "27 Then Jesus and His disciples went on to the villages around Caesarea Philippi. On the way, He questioned His disciples: \u201cWho do people say I am?\u201d 28 They replied, \u201cSome say John the Baptist; others say Elijah; and still others, one of the prophets.\u201d 29 \u201cBut what about you?\u201d Jesus asked. \u201cWho do you say I am?\u201d Peter answered, \u201cYou are the Christ.\u201d 30 And Jesus warned them not to tell anyone about Him. 31 Then He began to teach them that the Son of Man must suffer many things and be rejected by the elders, chief priests, and scribes, and that He must be killed and after three days rise again."}, {"t": "t", "x": "At ARISE, our mission is to reach the next generation, helping them experience Jesus so powerfully they become disciple makers."}, {"t": "h", "x": "Part 7: What Is a Disciple?"}, {"t": "s", "ref": "Matthew 4:19", "v": "\u201cCome, follow Me,\u201d Jesus said, \u201cand I will make you fishers of men.\u201d"}, {"t": "f", "x": "A disciple ___ and ___ Jesus.", "a": [["knows"], ["follows"]]}, {"t": "f", "x": "A disciple is being ___ by Jesus.", "a": [["changed"]]}, {"t": "f", "x": "A disciple is ___ Jesus on His mission.", "a": [["joining", "joins"]]}, {"t": "baptism"}]}, {"n": 2, "title": "Discover the Method", "sub": "Living relationally and missionally", "sab": "Second Sabbath", "icon": "circles", "blocks": [{"t": "h", "x": "Part 1: Recap of Level 1"}, {"t": "t", "x": "Level 1 focused on your purpose \u2014 the why and what of your life in God."}, {"t": "h", "x": "Part 2: Introduction to Level 2"}, {"t": "t", "x": "Purpose: discover the method of living out your purpose through relationships and sacrificial giving."}, {"t": "f", "x": "ARISE's method: make disciple-makers through relational ___ ___.", "a": [["life"], ["groups"]]}, {"t": "h", "x": "Part 3: Discovering Life Groups"}, {"t": "t", "x": "We were not made to do life alone. God created us for community, and Life Groups are a place to share with others, live life, and grow in faith together."}, {"t": "f", "x": "1. A place to ___ and be ___ \u2014 sharing our lives together.", "a": [["know"], ["known"]]}, {"t": "s", "ref": "Acts 2:46-47", "v": "46 With one accord they continued to meet daily in the temple courts and to break bread from house to house, sharing their meals with gladness and sincerity of heart, 47 praising God and enjoying the favor of all the people. And the Lord added to their number daily those who were being saved."}, {"t": "f", "x": "2. A place to ___ each other.", "a": [["love"]]}, {"t": "s", "ref": "1 John 3:16", "v": "By this we know what love is: Jesus laid down His life for us, and we ought to lay down our lives for our brothers."}, {"t": "f", "x": "3. A place to ___ ___ together.", "a": [["spiritually"], ["mature"]]}, {"t": "s", "ref": "Proverbs 27:17", "v": "As iron sharpens iron, so one man sharpens another."}, {"t": "h", "x": "Part 4: Life Groups at ARISE Miami"}, {"t": "f", "x": "Our desire is to be a church ___ life groups, not ___ life groups.", "a": [["of"], ["with"]]}, {"t": "s", "ref": "Acts 5:42", "v": "Every day, in the temple courts and from house to house, they did not stop teaching and proclaiming the good news that Jesus is the Christ."}, {"t": "t", "x": "Life Groups are varied and interest-based, run across three semesters, are open to anyone, and can be hosted by anyone \u2014 no Bible expertise required."}, {"t": "h", "x": "Part 5: Engaged and Committed Giving"}, {"t": "f", "x": "Jesus talked more about giving than ___, ___ or ___.", "a": [["heaven"], ["hell"], ["prayer"]]}, {"t": "s", "ref": "1 Corinthians 16:1-4", "v": "1 Now about the collection for the saints, you are to do as I directed the churches of Galatia: 2 On the first day of every week, each of you should set aside a portion of his income, saving it up, so that when I come no collections will be needed. 3 Then, on my arrival, I will send letters with those you recommend to carry your gift to Jerusalem. 4 And if it is advisable for me to go also, they can travel with me."}, {"t": "t", "x": "At ARISE Miami we practice tithing for the support of Christ's body, the Church. Giving 10% of our income is the biblical standard."}, {"t": "s", "ref": "Malachi 3:10", "v": "Bring the full tithe into the storehouse, so that there may be food in My house. Test Me in this,\u201d says the LORD of Hosts. \u201cSee if I will not open the windows of heaven and pour out for you blessing without measure."}, {"t": "s", "ref": "Proverbs 3:9-10", "v": "9 Honor the LORD with your wealth and with the firstfruits of all your harvest; 10 then your barns will be filled with plenty, and your vats will overflow with new wine."}, {"t": "t", "x": "Three types of giving: tithes \u2014 the first 10%; offerings \u2014 beyond the tithe; and the gift of giving, which is a spiritual gift."}, {"t": "s", "ref": "1 Timothy 6:18-19", "v": "18 Instruct them to do good, to be rich in good works, and to be generous and ready to share, 19 treasuring up for themselves a firm foundation for the future, so that they may take hold of that which is truly life."}, {"t": "s", "ref": "Romans 12:8", "v": "if it is encouraging, let him encourage; if it is giving, let him give generously; if it is leading, let him lead with diligence; if it is showing mercy, let him do it cheerfully."}, {"t": "t", "x": "Tithing is about trust, not money. We give to God through the church, not to the church."}, {"t": "giving_link"}, {"t": "h", "x": "Part 6: How We Live It Out"}, {"t": "f", "x": "1. We do it through ___ discipleship.", "a": [["life-on-life", "life on life"]]}, {"t": "f", "x": "2. ___ and ___ giving.", "a": [["engaged"], ["committed"]]}, {"t": "f", "x": "3. Through a ___ ___ \u2014 which we cover in Level 4.", "a": [["covenant"], ["partnership"]]}, {"t": "homework"}, {"t": "gifts"}]}, {"n": 3, "title": "Discover Your Giftedness", "sub": "Your gifts, and where they fit", "sab": "Third Sabbath", "icon": "gift", "blocks": [{"t": "h", "x": "Part 1: Recap"}, {"t": "t", "x": "We want fully empowered disciples walking in their giftedness."}, {"t": "h", "x": "Part 2: Welcome to Level 3"}, {"t": "t", "x": "Today's goal: review your spiritual gift inventory and explore how it applies."}, {"t": "s", "ref": "Romans 12:4-6", "v": "4 Just as each of us has one body with many members, and not all members have the same function, 5 so in Christ we who are many are one body, and each member belongs to one another. 6 We have different gifts according to the grace given us. If one\u2019s gift is prophecy, let him use it in proportion to his faith;"}, {"t": "t", "x": "Each person is unique and irreplaceable in the Body of Christ. Our gifts are given by grace, for the benefit of the Body."}, {"t": "s", "ref": "1 Peter 4:10", "v": "As good stewards of the manifold grace of God, each of you should use whatever gift he has received to serve one another."}, {"t": "h", "x": "Part 4: Spiritual Gift Review"}, {"t": "mygifts"}, {"t": "giftlist"}, {"t": "s", "ref": "1 Corinthians 12:4-27", "v": "4 There are different gifts, but the same Spirit. 5 There are different ministries, but the same Lord. 6 There are different ways of working, but the same God works all things in all people. 7 Now to each one the manifestation of the Spirit is given for the common good. 8 To one there is given through the Spirit the message of wisdom, to another the message of knowledge by the same Spirit, 9 to another faith by the same Spirit, to another gifts of healing by that one Spirit, 10 to another the working of miracles, to another prophecy, to another distinguishing between spirits, to another speaking in various tongues, and to still another the interpretation of tongues. 11 All these are the work of one and the same Spirit, who apportions them to each one as He determines. 12 The body is a unit, though it is composed of many parts. And although its parts are many, they all form one body. So it is with Christ. 13 For in one Spirit we were all baptized into one body, whether Jews or Greeks, slave or free, and we were all given one Spirit to drink. 14 For the body does not consist of one part, but of many. 15 If the foot should say, \u201cBecause I am not a hand, I do not belong to the body,\u201d that would not make it any less a part of the body. 16 And if the ear should say, \u201cBecause I am not an eye, I do not belong to the body,\u201d that would not make it any less a part of the body. 17 If the whole body were an eye, where would the sense of hearing be? If the whole body were an ear, where would the sense of smell be? 18 But in fact, God has arranged the members of the body, every one of them, according to His design. 19 If they were all one part, where would the body be? 20 As it is, there are many parts, but one body. 21 The eye cannot say to the hand, \u201cI do not need you.\u201d Nor can the head say to the feet, \u201cI do not need you.\u201d 22 On the contrary, the parts of the body that seem to be weaker are indispensable, 23 and the parts we consider less honorable, we treat with greater honor. And our unpresentable parts are treated with special modesty, 24 whereas our presentable parts have no such need. But God has composed the body and has given greater honor to the parts that lacked it, 25 so that there should be no division in the body, but that its members should have mutual concern for one another. 26 If one part suffers, every part suffers with it; if one part is honored, every part rejoices with it. 27 Now you are the body of Christ, and each of you is a member of it."}, {"t": "h", "x": "Part 5: My Jesus Story"}, {"t": "t", "x": "Storytelling is a big part of ARISE Miami. No one can refute your story, and it is a powerful evangelism tool."}, {"t": "reflect", "x": "What was your life like before Jesus?"}, {"t": "reflect", "x": "How did you come to know Jesus?"}, {"t": "reflect", "x": "What is your life like since then?"}, {"t": "h", "x": "Part 6: ARISE's Story"}, {"t": "t", "x": "ARISE came from a merger of two churches a generation apart \u2014 New Community and Ignite Fellowship \u2014 committed to staying effective in a changing world."}, {"t": "t", "x": "Core values: Jesus and His Word. Acceptance. Innovation. Service. Reaching the Next Generation. Making Disciple Makers."}, {"t": "t", "x": "Motto: Whatever It Takes. As long as it's not illegal, immoral or fattening, we'll try it."}, {"t": "h", "x": "Part 7: Recap"}, {"t": "t", "x": "Your story, Jesus' story and ARISE's story are intersecting now. You have an irreplaceable and unique calling."}]}, {"n": 4, "title": "Discover Your Impact", "sub": "Family, church, city", "sab": "Fourth Sabbath", "icon": "target", "blocks": [{"t": "h", "x": "Part 1: Church on Mission"}, {"t": "t", "x": "Recap: what is the mission God has uniquely called us to? How do we define a disciple? What did you discover about your gifts?"}, {"t": "h", "x": "Part 2: Fully Engaged at ARISE Miami"}, {"t": "t", "x": "Worship corporately \u2014 Sabbath gathering, church-wide events, mid-size gatherings."}, {"t": "t", "x": "Connect deeply \u2014 The Journey, baptism, Life Groups, Base Camp."}, {"t": "t", "x": "Give committedly \u2014 time, talent, treasure."}, {"t": "t", "x": "Minister selflessly \u2014 serving on a ministry team."}, {"t": "t", "x": "Serve Miami \u2014 the local church, missions and non-profits, individuals in need."}, {"t": "t", "x": "These are on-ramps for growing in relationship with God and people while maturing as disciples of Jesus."}, {"t": "h", "x": "Part 3: ARISE Miami Covenant Partnership"}, {"t": "covenant"}, {"t": "h", "x": "Part 4: Next Steps"}, {"t": "t", "x": "Membership at ARISE Miami is not about adding your name to a list \u2014 it is about connecting with the people and the vision of the church."}, {"t": "ministry"}]}], "GIFTS": [["evangelism", "Evangelism", "A special ability and enthusiasm for communicating the good news of salvation in Christ to those who are not yet believers.", "Acts 8:4-8"], ["prophecy", "Prophecy", "The special ability to receive and communicate a timely message from God to an individual or group.", "Acts 27:21-26"], ["teaching", "Teaching / Preaching", "The ability to understand spiritual truths and to explain them clearly to others.", "Acts 20:20"], ["exhortation", "Exhortation / Encouragement", "Offering comfort, consolation or encouragement to those who are discouraged, confused or wavering in their faith.", "Acts 11:22-24"], ["shepherding", "Shepherding", "A God-given ability to care for the spiritual needs of believers and to lead and nurture them to grow in their faith.", "1 Peter 5:1-4"], ["serving", "Serving / Helps", "Bringing spiritual value to the accomplishment of tasks, working alongside others and freeing them to use their own gifts.", "Acts 9:36"], ["mercy_showing", "Mercy-Showing", "Empathy and compassion for people in pain, with a strong desire to minister to them and alleviate their suffering.", "Acts 16:33"], ["giving", "Giving / Generosity", "A God-given love for sharing whatever resources one has, much or little, for the benefit of the Body of Christ.", "Luke 21:1-4"], ["administration", "Administration", "Understanding immediate and long-range goals and organizing people, information and materials to accomplish them.", "Acts 6:2-7"]], "MIN": [["Next Steps", "Helping people take their next step and find where they belong.", ["Welcoming first-time guests", "Follow-up and connection", "Missions and outreach", "Community service"], ["evangelism", "exhortation", "shepherding"]], ["Hospitality", "Making everyone who walks in feel welcomed and cared for.", ["Greeting and ushering", "Food and refreshments", "Event setup"], ["shepherding", "mercy_showing", "giving"]], ["Worship", "Leading the church into God's presence through music.", ["Vocals", "Instruments", "Worship planning"], ["exhortation", "serving", "mercy_showing"]], ["Student Ministry", "Walking with students and young adults as they follow Jesus.", ["Students", "Young adults", "Mentoring"], ["evangelism", "teaching", "exhortation"]], ["Children's Ministry / Seekers", "Introducing children to Jesus and caring for them well.", ["Teaching a class", "Check-in and child safety", "Crafts and activities"], ["teaching", "serving", "giving"]], ["Life Groups", "Life-on-life discipleship in homes, and the gatherings that bring us together.", ["Hosting a group", "Co-leading a group", "Gatherings and events", "Life-on-life discipleship"], ["evangelism", "prophecy", "shepherding"]], ["Production", "Running the service \u2014 sound, video and lighting.", ["Sound", "Video and livestream", "Lighting", "Slides"], ["prophecy", "serving", "administration"]], ["Creative and Social", "Design and social media \u2014 how ARISE looks and sounds online.", ["Graphic design", "Photo and video content", "Social media"], ["prophecy", "teaching", "administration"]], ["Behind the Scenes", "Resources, administration and facilities \u2014 the work that holds everything up.", ["Facilities and maintenance", "Office and administration", "Resources and supplies"], ["mercy_showing", "giving", "administration"]]], "COV": [["1. Protect the Unity of My Church by", ["Acting in love toward others", "Refusing to gossip", "Supporting leadership", "Resolving conflicts biblically"], ["Romans 14:19", "Ephesians 4:29", "Hebrews 13:17"]], ["2. Share the Responsibility of My Church by", ["Praying for growth and health", "Inviting others to attend", "Warmly welcoming guests"], ["1 Thessalonians 1:1-2", "Luke 14:23", "Romans 15:7"]], ["3. Serve the Ministry of My Church by", ["Discovering my gifts and talents", "Using them to serve others", "Developing a servant's heart"], ["1 Peter 4:10", "Ephesians 4:11-12", "Philippians 2:4-5"]], ["4. Support the Testimony of My Church by", ["Faithfully attending church and groups", "Living a godly life", "Giving regularly"], ["Acts 2:42", "Hebrews 10:25", "Philippians 1:27"]]], "P": {"John 17:3": "Now this is eternal life, that they may know You, the only true God, and Jesus Christ, whom You have sent.", "Genesis 2:18": "The LORD God also said, \u201cIt is not good for the man to be alone. I will make for him a suitable helper.\u201d", "Romans 3:23": "for all have sinned and fall short of the glory of God,", "Romans 6:23": "For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord.", "Titus 2:11-13": "11 For the grace of God has appeared, bringing salvation to everyone. 12 It instructs us to renounce ungodliness and worldly passions, and to live sensible, upright, and godly lives in the present age, 13 as we await the blessed hope and glorious appearance of our great God and Savior Jesus Christ.", "Romans 5:8": "But God proves His love for us in this: While we were still sinners, Christ died for us.", "Romans 10:9-13": "9 that if you confess with your mouth, \u201cJesus is Lord,\u201d and believe in your heart that God raised Him from the dead, you will be saved. 10 For with your heart you believe and are justified, and with your mouth you confess and are saved. 11 It is just as the Scripture says: \u201cAnyone who believes in Him will never be put to shame.\u201d 12 For there is no difference between Jew and Greek: The same Lord is Lord of all, and gives richly to all who call on Him, 13 for, \u201cEveryone who calls on the name of the Lord will be saved.\u201d", "Titus 2:12": "It instructs us to renounce ungodliness and worldly passions, and to live sensible, upright, and godly lives in the present age,", "Romans 8:1": "Therefore, there is now no condemnation for those who are in Christ Jesus.", "Matthew 28:18-20": "18 Then Jesus came to them and said, \u201cAll authority in heaven and on earth has been given to Me. 19 Therefore go and make disciples of all nations, baptizing them in the name of the Father, and of the Son, and of the Holy Spirit, 20 and teaching them to obey all that I have commanded you. And surely I am with you always, even to the end of the age.\u201d", "Acts 2:37-38": "37 When the people heard this, they were cut to the heart and asked Peter and the other apostles, \u201cBrothers, what shall we do?\u201d 38 Peter replied, \u201cRepent and be baptized, every one of you, in the name of Jesus Christ for the forgiveness of your sins, and you will receive the gift of the Holy Spirit.", "Mark 8:27-31": "27 Then Jesus and His disciples went on to the villages around Caesarea Philippi. On the way, He questioned His disciples: \u201cWho do people say I am?\u201d 28 They replied, \u201cSome say John the Baptist; others say Elijah; and still others, one of the prophets.\u201d 29 \u201cBut what about you?\u201d Jesus asked. \u201cWho do you say I am?\u201d Peter answered, \u201cYou are the Christ.\u201d 30 And Jesus warned them not to tell anyone about Him. 31 Then He began to teach them that the Son of Man must suffer many things and be rejected by the elders, chief priests, and scribes, and that He must be killed and after three days rise again.", "Matthew 4:19": "\u201cCome, follow Me,\u201d Jesus said, \u201cand I will make you fishers of men.\u201d", "Acts 2:46-47": "46 With one accord they continued to meet daily in the temple courts and to break bread from house to house, sharing their meals with gladness and sincerity of heart, 47 praising God and enjoying the favor of all the people. And the Lord added to their number daily those who were being saved.", "1 John 3:16": "By this we know what love is: Jesus laid down His life for us, and we ought to lay down our lives for our brothers.", "Proverbs 27:17": "As iron sharpens iron, so one man sharpens another.", "Acts 5:42": "Every day, in the temple courts and from house to house, they did not stop teaching and proclaiming the good news that Jesus is the Christ.", "1 Corinthians 16:1-4": "1 Now about the collection for the saints, you are to do as I directed the churches of Galatia: 2 On the first day of every week, each of you should set aside a portion of his income, saving it up, so that when I come no collections will be needed. 3 Then, on my arrival, I will send letters with those you recommend to carry your gift to Jerusalem. 4 And if it is advisable for me to go also, they can travel with me.", "Deuteronomy 14:22-25": "22 You must be sure to set aside a tenth of all the produce brought forth each year from your fields. 23 And you are to eat a tenth of your grain, new wine, and oil, and the firstborn of your herds and flocks, in the presence of the LORD your God at the place He will choose as a dwelling for His Name, so that you may learn to fear the LORD your God always. 24 But if the distance is too great for you to carry that with which the LORD your God has blessed you, because the place where the LORD your God will choose to put His Name is too far away, 25 then exchange it for money, take the money in your hand, and go to the place the LORD your God will choose.", "Deuteronomy 14:28-29": "28 At the end of every three years, bring a tenth of all your produce for that year and lay it up within your gates. 29 Then the Levite (because he has no portion or inheritance among you), the foreigner, the fatherless, and the widow within your gates may come and eat and be satisfied. And the LORD your God will bless you in all the work of your hands.", "Malachi 3:10": "Bring the full tithe into the storehouse, so that there may be food in My house. Test Me in this,\u201d says the LORD of Hosts. \u201cSee if I will not open the windows of heaven and pour out for you blessing without measure.", "Proverbs 3:9-10": "9 Honor the LORD with your wealth and with the firstfruits of all your harvest; 10 then your barns will be filled with plenty, and your vats will overflow with new wine.", "1 Timothy 6:18-19": "18 Instruct them to do good, to be rich in good works, and to be generous and ready to share, 19 treasuring up for themselves a firm foundation for the future, so that they may take hold of that which is truly life.", "Romans 12:8": "if it is encouraging, let him encourage; if it is giving, let him give generously; if it is leading, let him lead with diligence; if it is showing mercy, let him do it cheerfully.", "Romans 12:4-6": "4 Just as each of us has one body with many members, and not all members have the same function, 5 so in Christ we who are many are one body, and each member belongs to one another. 6 We have different gifts according to the grace given us. If one\u2019s gift is prophecy, let him use it in proportion to his faith;", "1 Peter 4:10": "As good stewards of the manifold grace of God, each of you should use whatever gift he has received to serve one another.", "1 Corinthians 12:4-27": "4 There are different gifts, but the same Spirit. 5 There are different ministries, but the same Lord. 6 There are different ways of working, but the same God works all things in all people. 7 Now to each one the manifestation of the Spirit is given for the common good. 8 To one there is given through the Spirit the message of wisdom, to another the message of knowledge by the same Spirit, 9 to another faith by the same Spirit, to another gifts of healing by that one Spirit, 10 to another the working of miracles, to another prophecy, to another distinguishing between spirits, to another speaking in various tongues, and to still another the interpretation of tongues. 11 All these are the work of one and the same Spirit, who apportions them to each one as He determines. 12 The body is a unit, though it is composed of many parts. And although its parts are many, they all form one body. So it is with Christ. 13 For in one Spirit we were all baptized into one body, whether Jews or Greeks, slave or free, and we were all given one Spirit to drink. 14 For the body does not consist of one part, but of many. 15 If the foot should say, \u201cBecause I am not a hand, I do not belong to the body,\u201d that would not make it any less a part of the body. 16 And if the ear should say, \u201cBecause I am not an eye, I do not belong to the body,\u201d that would not make it any less a part of the body. 17 If the whole body were an eye, where would the sense of hearing be? If the whole body were an ear, where would the sense of smell be? 18 But in fact, God has arranged the members of the body, every one of them, according to His design. 19 If they were all one part, where would the body be? 20 As it is, there are many parts, but one body. 21 The eye cannot say to the hand, \u201cI do not need you.\u201d Nor can the head say to the feet, \u201cI do not need you.\u201d 22 On the contrary, the parts of the body that seem to be weaker are indispensable, 23 and the parts we consider less honorable, we treat with greater honor. And our unpresentable parts are treated with special modesty, 24 whereas our presentable parts have no such need. But God has composed the body and has given greater honor to the parts that lacked it, 25 so that there should be no division in the body, but that its members should have mutual concern for one another. 26 If one part suffers, every part suffers with it; if one part is honored, every part rejoices with it. 27 Now you are the body of Christ, and each of you is a member of it.", "Acts 6:2-7": "2 So the Twelve summoned all the disciples and said, \u201cIt is unacceptable for us to neglect the word of God in order to wait on tables. 3 Therefore, brothers, select from among you seven men confirmed to be full of the Spirit and wisdom. We will appoint this responsibility to them 4 and will devote ourselves to prayer and to the ministry of the word.\u201d 5 This proposal pleased the whole group. They chose Stephen, a man full of faith and of the Holy Spirit, as well as Philip, Prochorus, Nicanor, Timon, Parmenas, and Nicolas from Antioch, a convert to Judaism. 6 They presented these seven to the apostles, who prayed and laid their hands on them. 7 So the word of God continued to spread. The number of disciples in Jerusalem grew rapidly, and a great number of priests became obedient to the faith.", "Galatians 2:7-8": "7 On the contrary, they saw that I had been entrusted to preach the gospel to the uncircumcised, just as Peter had been to the circumcised. 8 For the One who was at work in Peter\u2019s apostleship to the circumcised was also at work in my apostleship to the Gentiles.", "Exodus 31:3-5": "3 And I have filled him with the Spirit of God, with skill, ability, and knowledge in all kinds of craftsmanship, 4 to design artistic works in gold, silver, and bronze, 5 to cut gemstones for settings, and to carve wood, so that he may be a master of every craft.", "Psalm 150:3-5": "3 Praise Him with the sound of the horn; praise Him with the harp and lyre. 4 Praise Him with tambourine and dancing; praise Him with strings and flute. 5 Praise Him with clashing cymbals; praise Him with resounding cymbals.", "Acts 5:1-11": "1 Now a man named Ananias, together with his wife Sapphira, also sold a piece of property. 2 With his wife\u2019s full knowledge, he kept back some of the proceeds for himself, but brought a portion and laid it at the apostles\u2019 feet. 3 Then Peter said, \u201cAnanias, how is it that Satan has filled your heart to lie to the Holy Spirit and withhold some of the proceeds from the land? 4 Did it not belong to you before it was sold? And after it was sold, was it not at your disposal? How could you conceive such a deed in your heart? You have not lied to men, but to God!\u201d 5 On hearing these words, Ananias fell down and died. And great fear came over all who heard what had happened. 6 Then the young men stepped forward, wrapped up his body, and carried him out and buried him. 7 About three hours later his wife also came in, unaware of what had happened. 8 \u201cTell me,\u201d said Peter, \u201cis this the price you and your husband got for the land?\u201d \u201cYes,\u201d she answered, \u201cthat is the price.\u201d 9 \u201cHow could you agree to test the Spirit of the Lord?\u201d Peter replied. \u201cLook, the feet of the men who buried your husband are at the door, and they will carry you out also.\u201d 10 At that instant she fell down at his feet and died. Then the young men came in and, finding her dead, carried her out and buried her beside her husband. 11 And great fear came over the whole church and all who heard about these events.", "Acts 11:22-24": "22 When news of this reached the ears of the church in Jerusalem, they sent Barnabas to Antioch. 23 When he arrived and saw the grace of God, he rejoiced and encouraged them all to abide in the Lord with all their hearts. 24 Barnabas was a good man, full of the Holy Spirit and faith, and a great number of people were brought to the Lord.", "Acts 8:4-8": "4 Those who had been scattered preached the word wherever they went. 5 Philip went down to a city in Samaria and proclaimed the Christ to them. 6 The crowds gave their undivided attention to Philip\u2019s message and to the signs they saw him perform. 7 With loud shrieks, unclean spirits came out of many who were possessed, and many of the paralyzed and lame were healed. 8 So there was great joy in that city.", "Hebrews 11:7": "By faith Noah, when warned about things not yet seen, in godly fear built an ark to save his family. By faith he condemned the world and became heir of the righteousness that comes by faith.", "Luke 12:1-4": "1 In the meantime, a crowd of many thousands had gathered, so that they were trampling one another. Jesus began to speak first to His disciples: \u201cBeware of the leaven of the Pharisees, which is hypocrisy. 2 There is nothing concealed that will not be disclosed, and nothing hidden that will not be made known. 3 What you have spoken in the dark will be heard in the daylight, and what you have whispered in the inner rooms will be proclaimed from the housetops. 4 I tell you, My friends, do not be afraid of those who kill the body and after that can do no more.", "Acts 9:36": "In Joppa there was a disciple named Tabitha (which is translated as Dorcas), who was always occupied with works of kindness and charity.", "Acts 16:14-15": "14 Among those listening was a woman named Lydia, a dealer in purple cloth from the city of Thyatira, who was a worshiper of God. The Lord opened her heart to respond to Paul\u2019s message. 15 And when she and her household had been baptized, she urged us, \u201cIf you consider me a believer in the Lord, come and stay at my house.\u201d And she persuaded us.", "James 5:17-18": "17 Elijah was a man just like us. He prayed earnestly that it would not rain, and it did not rain on the land for three and a half years. 18 Again he prayed, and the heavens gave rain, and the earth yielded its crops.", "Colossians 2:1-4": "1 For I want you to know how much I am struggling for you and for those at Laodicea, and for all who have not met me face to face, 2 that they may be encouraged in heart, knit together in love, and filled with the full riches of complete understanding, so that they may know the mystery of God, namely Christ, 3 in whom are hidden all the treasures of wisdom and knowledge. 4 I say this so that no one will deceive you by smooth rhetoric.", "Acts 16:33": "At that hour of the night, the jailer took them and washed their wounds. And without delay, he and all his household were baptized.", "Acts 27:21-26": "21 After the men had gone a long time without food, Paul stood up among them and said, \u201cMen, you should have followed my advice not to sail from Crete. Then you would have averted this disaster and loss. 22 But now I urge you to keep up your courage, because you will not experience any loss of life, but only of the ship. 23 For just last night an angel of God, whose I am and whom I serve, stood beside me 24 and said, \u2018Do not be afraid, Paul; you must stand before Caesar. And look, God has granted you the lives of all who sail with you.\u2019 25 So take courage, men, for I believe God that it will happen just as He told me. 26 However, we must run aground on some island.\u201d", "1 Peter 5:1-4": "1 As a fellow elder, a witness of Christ\u2019s sufferings, and a partaker of the glory to be revealed, I appeal to the elders among you: 2 Be shepherds of God\u2019s flock that is among you, watching over them not out of compulsion, but because it is God\u2019s will; not out of greed, but out of eagerness; 3 not lording it over those entrusted to you, but being examples to the flock. 4 And when the Chief Shepherd appears, you will receive the crown of glory that will never fade away.", "Acts 20:20": "I did not shrink back from declaring anything that was helpful to you as I taught you publicly and from house to house,", "2 Peter 3:15": "Consider also that our Lord\u2019s patience brings salvation, just as our beloved brother Paul also wrote you with the wisdom God gave him.", "Romans 14:19": "So then, let us pursue what leads to peace and to mutual edification.", "Ephesians 4:29": "Let no unwholesome talk come out of your mouths, but only what is helpful for building up the one in need and bringing grace to those who listen.", "Hebrews 13:17": "Obey your leaders and submit to them, for they watch over your souls as those who must give an account. To this end, allow them to lead with joy and not with grief, for that would be of no advantage to you.", "1 Thessalonians 1:1-2": "1 Paul, Silvanus, and Timothy, To the church of the Thessalonians in God the Father and the Lord Jesus Christ: Grace and peace to you. 2 We always thank God for all of you, remembering you in our prayers", "Luke 14:23": "So the master told his servant, \u2018Go out to the highways and hedges and compel them to come in, so that my house will be full.", "Romans 15:7": "Accept one another, then, just as Christ accepted you, in order to bring glory to God.", "Ephesians 4:11-12": "11 And it was He who gave some to be apostles, some to be prophets, some to be evangelists, and some to be pastors and teachers, 12 to equip the saints for works of ministry and to build up the body of Christ,", "Philippians 2:4-5": "4 Each of you should look not only to your own interests, but also to the interests of others. 5 Let this mind be in you which was also in Christ Jesus:", "Acts 2:42": "They devoted themselves to the apostles\u2019 teaching and to the fellowship, to the breaking of bread and to prayer.", "Hebrews 10:25": "Let us not neglect meeting together, as some have made a habit, but let us encourage one another, and all the more as you see the Day approaching.", "Philippians 1:27": "Nevertheless, conduct yourselves in a manner worthy of the gospel of Christ. Then, whether I come and see you or only hear about you in my absence, I will know that you stand firm in one spirit, contending side by side for the faith of the gospel,", "Ephesians 5:3-20": "3 But among you, as is proper among the saints, there must not be even a hint of sexual immorality, or of any kind of impurity, or of greed. 4 Nor should there be obscenity, foolish talk, or crude joking, which are out of character, but rather thanksgiving. 5 For of this you can be sure: No immoral, impure, or greedy person (that is, an idolater), has any inheritance in the kingdom of Christ and of God. 6 Let no one deceive you with empty words, for because of such things the wrath of God is coming on the sons of disobedience. 7 Therefore do not be partakers with them. 8 For you were once darkness, but now you are light in the Lord. Walk as children of light, 9 for the fruit of the light consists in all goodness, righteousness, and truth. 10 Test and prove what pleases the Lord. 11 Have no fellowship with the fruitless deeds of darkness, but rather expose them. 12 For it is shameful even to mention what the disobedient do in secret. 13 But everything exposed by the light becomes visible, for everything that is illuminated becomes a light itself. 14 So it is said: \u201cWake up, O sleeper, rise up from the dead, and Christ will shine on you.\u201d 15 Pay careful attention, then, to how you walk, not as unwise but as wise, 16 redeeming the time, because the days are evil. 17 Therefore do not be foolish, but understand what the Lord\u2019s will is. 18 Do not get drunk on wine, which leads to reckless indiscretion. Instead, be filled with the Spirit. 19 Speak to one another with psalms, hymns, and spiritual songs. Sing and make music in your hearts to the Lord, 20 always giving thanks to God the Father for everything in the name of our Lord Jesus Christ.", "Luke 21:1-4": "1 Then Jesus looked up and saw the rich putting their gifts into the treasury, 2 and He saw a poor widow put in two small copper coins. 3 \u201cTruly I tell you,\u201d He said, \u201cthis poor widow has put in more than all the others. 4 For they all contributed out of their surplus, but she out of her poverty has put in all she had to live on.\u201d"}};
+const L=DATA.L, GIFTS=DATA.GIFTS, MIN=DATA.MIN, COV=DATA.COV, P=DATA.P;
+const ICON={heart:'<path d="M12 21s-8-5.1-8-10.2A4.8 4.8 0 0 1 12 7a4.8 4.8 0 0 1 8 3.8C20 15.9 12 21 12 21z"/>',
+circles:'<circle cx="12" cy="5" r="2.6"/><circle cx="5" cy="17" r="2.6"/><circle cx="19" cy="17" r="2.6"/>',
+gift:'<path d="M4 11h16v9H4z"/><path d="M3 7h18v3.4H3z"/><path d="M11.1 7V20h1.8V7z" fill="#0B2340" opacity=".35"/>',
+target:'<circle cx="12" cy="12" r="8.4" fill="none" stroke="#fff" stroke-width="1.7"/><circle cx="12" cy="12" r="4.4" fill="none" stroke="#fff" stroke-width="1.7"/><circle cx="12" cy="12" r="1.5"/>',
+lock:'<path d="M7 10V8a5 5 0 0 1 10 0v2h1v10H6V10z" fill="none" stroke="#fff" stroke-width="1.7"/>'};
+const S={att:{1:false,2:false,3:false,4:false},slots:{},tries:{},gifts:[],refl:{},
+  baptism:null,signed:false,mins:new Set(),roles:new Set(),view:'home',cur:1};
+const sc=document.getElementById('sc'),pg=document.getElementById('pg'),
+ back=document.getElementById('back'),bt=document.getElementById('bt'),bs=document.getElementById('bs');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const lv=n=>L[n-1];
+const blanks=n=>lv(n).blocks.reduce((a,b)=>a+(b.t==='f'?b.a.length:0),0);
+const filled=n=>Object.keys(S.slots).filter(k=>k.startsWith(n+':')).length;
+const norm=s=>s.toLowerCase().replace(/[^a-z0-9]/g,'');
+function lev(a,b){const m=[...Array(a.length+1)].map((_,i)=>[i,...Array(b.length).fill(0)]);
+ for(let j=0;j<=b.length;j++)m[0][j]=j;
+ for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)
+  m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+ return m[a.length][b.length];}
+const okAns=(v,list)=>{const x=norm(v);if(!x)return false;
+ return list.some(w=>{const t=norm(w);return x===t||(t.length>4&&lev(x,t)<=1);});};
+// PREVIEW MODE — worksheets and reflections are optional while the
+// team is testing. The only real requirement kept is the three gifts
+// at the end of Level 2, because those drive Level 3's gift review
+// and Level 4's recommendations.
+function lessonDone(n){
+  if(n===2) return S.gifts.length===3;
+  return true;
+}
+function unlocked(n){ if(n<=2)return true;
+  if(n===3) return lessonDone(2);
+  return S.att[3]&&lessonDone(3); }
+function whyLocked(n){
+  if(n===3) return 'Open Level 2 and record your three spiritual gifts at the bottom.';
+  if(!S.att[3]) return 'Attend Level 3 first — the covenant needs you in the room.';
+  return 'Finish the Level 3 reflection.'; }
+
+function home(){
+  S.view='home';back.style.display='none';bt.textContent='The Journey';bs.textContent='Arise Miami';
+  pg.style.width=(Object.values(S.att).filter(Boolean).length/4*100)+'%';
+  const cards=L.map(l=>{const open=unlocked(l.n),done=S.att[l.n];
+   return `<button class="card ${done?'done':(open?'':'locked')}" data-n="${l.n}" ${open?'':'disabled'}>
+   <span class="ic"><svg viewBox="0 0 24 24">${open?ICON[l.icon]:ICON.lock}</svg></span>
+   <span class="me"><span class="lv">Level ${l.n}</span><span class="tt">${esc(l.title)}</span>
+   <span class="su">${esc(l.sub)}</span>
+   <span class="dy">${done?'&#10003; Completed':esc(l.sab)+' &middot; 9:00 AM &middot; 90 min'}</span></span>
+   <span class="cv">${open?'&#8250;':''}</span></button>`;}).join('');
+  const lk=L.filter(l=>!unlocked(l.n));
+  sc.innerHTML=`<div class="hero"><svg class="br" viewBox="0 0 400 260" preserveAspectRatio="none">
+   <path d="M-20 210 C 90 150, 150 250, 300 170 S 420 120 430 150" stroke="#fff" stroke-width="26" fill="none" opacity=".35" stroke-linecap="round"/>
+   <path d="M-10 60 C 80 20, 190 110, 300 40" stroke="#fff" stroke-width="14" fill="none" opacity=".22" stroke-linecap="round"/>
+   <path d="M120 -30 L250 130 L-10 130 Z" fill="#fff" opacity=".08"/></svg>
+   <div class="in"><div class="eye">Arise Miami</div><h2>The<br>Journey</h2>
+   <p>Four steps to learn your purpose, understand your giftedness, and join us on mission.</p></div></div>
+   <div class="next"><span class="dot"></span><span><b>Level 1 &middot; this Sabbath</b>
+   <span>Saturday 6 September &middot; 9:00 AM &middot; Fellowship Hall</span></span></div>
+   <div class="pad"><div class="st">Your four levels</div>${cards}
+   ${lk.length?`<div class="note"><b>Level ${lk[0].n}</b> — ${esc(whyLocked(lk[0].n))}</div>`:''}</div>`;
+  sc.querySelectorAll('.card[data-n]').forEach(b=>b.onclick=()=>lesson(+b.dataset.n));
+  sc.scrollTop=0;
+}
+
+function render(n,b,i){
+  if(b.t==='h') return `<div class="blk h">${esc(b.x)}</div>`;
+  if(b.t==='t') return `<div class="blk t">${esc(b.x)}</div>`;
+  if(b.t==='s'){const lg=(b.v||'').length>300;
+    return `<div class="blk s"><div class="ref">${esc(b.ref)}<span class="ver">BSB</span></div>
+    <div class="vt${lg?' clamp':''}">${esc(b.v)}</div>
+    ${lg?'<button class="more">Read the full passage</button>':''}</div>`;}
+  if(b.t==='f'){let k=-1;
+    const x=esc(b.x).replace(/___/g,()=>{k++;
+      return `<span class="slot" data-b="${i}" data-s="${k}"><input type="text" autocomplete="off"
+        autocapitalize="off" spellcheck="false" aria-label="Blank ${k+1}"></span>`;});
+    return `<div class="blk f" data-fb="${i}">${x}<div class="fn"></div></div>`;}
+  if(b.t==='baptism') return baptismHTML();
+  if(b.t==='giving_link') return `<div class="box hi"><h3>Give online</h3>
+    <p>Tithes and offerings can be given securely through Adventist Giving.</p>
+    <button class="btn teal" id="give">Open Adventist Giving</button>
+    <p style="margin-top:10px;font-size:12px;color:var(--muted);word-break:break-all">adventistgiving.org/donate/ANTBS4</p></div>`;
+  if(b.t==='homework') return `<div class="box hi"><h3>Your homework before Level 3</h3>
+    <p>Complete the Spiritual Gifts Assessment online. It takes about 25 minutes, and you cannot come to Level 3 without it.</p>
+    <button class="btn teal" id="hw">Open the survey</button>
+    <p style="margin-top:12px;font-size:12.5px">When you're done, come back and record your top three gifts.</p></div>`;
+  if(b.t==='gifts') return '<div id="giftstep"></div>'+giftsHTML();
+  if(b.t==='mygifts'){
+    if(S.gifts.length!==3) return `<div class="note">Your survey results aren't recorded yet. Open Level 2 to add them.</div>`;
+    return `<div class="box hi"><h3>Your top three gifts</h3>
+      <p style="margin-bottom:11px">Recorded in Level 2, from your survey.</p>
+      ${S.gifts.map((g,i)=>{const G=GIFTS.find(x=>x[0]===g);
+        return `<div class="gitem"><div class="r">Number ${i+1}</div>
+        <b>${esc(G[1])}</b><p>${esc(G[2])}</p>
+        <div class="r">${esc(G[3])}<span class="ver">BSB</span></div>
+        <div class="gscrip">${esc(P[G[3]]||'')}</div></div>`;}).join('')}
+      </div>`;}
+  if(b.t==='giftlist') return `<div class="box">${GIFTS.map(g=>`<div class="gitem">
+    <b>${esc(g[1])}</b><p>${esc(g[2])}</p>
+    <div class="r">${esc(g[3])}<span class="ver">BSB</span></div>
+    <div class="gscrip">${esc(P[g[3]]||'')}</div></div>`).join('')}</div>`;
+  if(b.t==='reflect'){const idx=lv(n).blocks.filter(z=>z.t==='reflect').indexOf(b);
+    return `<div class="box"><h3 style="font-size:15px">${esc(b.x)}</h3>
+    <p style="font-size:12.5px;margin:4px 0 10px;color:var(--muted)">There is no right answer. Write as much or as little as you want.</p>
+    <textarea data-refl="${idx}" placeholder="Your answer...">${esc(S.refl[idx]||'')}</textarea></div>`;}
+  if(b.t==='covenant') return covenantHTML();
+  if(b.t==='ministry') return ministryHTML();
+  return '';
+}
+
+function baptismHTML(){
+  const o=[['yes','Yes — I want to be baptized.'],
+           ['talk','I have questions. I would like to talk with someone.'],
+           ['not','Not yet.']];
+  return `<div class="box hi"><h3>Your next step</h3>
+   <p>Baptism is the next step of obedience. Anyone who believes and accepts the Gospel can be baptized.</p>
+   <p style="margin-top:8px">Where are you today?</p>
+   ${o.map(([v,t])=>`<div class="opt ${S.baptism===v?'on':''}" data-bap="${v}">
+     <span class="rd"></span><span>${esc(t)}</span></div>`).join('')}
+   ${S.baptism==='yes'||S.baptism==='talk'?
+     `<div class="note" style="margin-top:12px">Pastor Kendall will be told today, and someone from the baptismal prep team will reach out this week.</div>`:''}
+   </div>`;
+}
+function giftsHTML(){
+  return `<div class="box hi"><h3>Your top three gifts</h3>
+   <p>Enter the top three results from your survey, in order. Tap to add, tap again to remove.</p>
+   <div style="margin-top:13px">${GIFTS.map(g=>{const i=S.gifts.indexOf(g[0]);
+     return `<button class="gchip ${i>=0?'on':''}" data-g="${g[0]}">
+       ${i>=0?`<span class="rk">${i+1}</span>`:''}${esc(g[1])}</button>`;}).join('')}</div>
+   ${S.gifts.length===3?`<div class="note" style="margin-top:10px;background:#EDF8F2;border-color:#BFE6D3;color:#2E7D55">
+     Recorded. Level 3 is unlocked.</div>`:
+     `<p style="margin-top:10px;font-size:12.5px;color:var(--muted)">${3-S.gifts.length} more to choose.</p>`}
+   </div>`;
+}
+function covenantHTML(){
+  return `<div class="box"><h3>ARISE Miami Covenant Partnership</h3>
+   <p style="margin-top:6px">Having received Jesus Christ as Lord and Savior, having been baptized, and in agreement with ARISE's mission, I commit to:</p>
+   ${COV.map((c,ci)=>`<div class="cvsec"><b>${esc(c[0])}</b><ul>${c[1].map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+     <div class="rf">${c[2].map((rf,ri)=>`<button class="rchip" data-cv="${ci}-${ri}" data-ref="${esc(rf)}">${esc(rf)}</button>`).join('')}</div>
+     ${c[2].map((rf,ri)=>`<div class="rtxt" id="cv-${ci}-${ri}"><b>${esc(rf)} &middot; BSB</b>${esc(P[rf]||'')}</div>`).join('')}
+     </div>`).join('')}
+   <p style="margin-top:14px;font-weight:600;color:var(--ink)">Sign below as a gesture of your commitment.</p>
+   <canvas id="sig" class="${S.signed?'has':''}"></canvas>
+   <div style="display:flex;gap:9px;margin-top:9px">
+     <button class="btn ghost" id="clr" style="margin:0">Clear</button>
+     <button class="btn" id="sgn" style="margin:0" ${S.signed?'disabled':''}>${S.signed?'Signed':'I commit'}</button>
+   </div></div>`;
+}
+function ministryHTML(){
+  // Rank by how many of their gifts a team draws on, but never let a
+  // gift disappear: fill slots so every gift is represented first,
+  // then spend anything left over on the strongest remaining match.
+  const scored = MIN.map(m=>({m, hit:m[3].filter(g=>S.gifts.includes(g))}))
+                    .filter(x=>x.hit.length)
+                    .sort((a,b)=>b.hit.length-a.hit.length);
+  const rec=[], covered=new Set(), pool=[...scored];
+  const take=x=>{rec.push(x); x.hit.forEach(g=>covered.add(g));
+                 pool.splice(pool.indexOf(x),1);};
+  if(pool.length) take(pool[0]);
+  while(pool.length && covered.size < S.gifts.length){
+    const need = pool.find(x=>x.hit.some(g=>!covered.has(g)));
+    if(!need) break;
+    take(need);
+  }
+  while(pool.length && rec.length<3) take(pool[0]);
+  rec.sort((a,b)=>b.hit.length-a.hit.length);
+  const recNames = new Set(rec.map(x=>x.m[0]));
+  const label = g=>{const G=GIFTS.find(x=>x[0]===g); return G?G[1]:g;};
+
+  const cardFor=(m,why)=>{
+    const on=S.mins.has(m[0])||m[2].some(r=>S.roles.has(r));
+    return `<div class="mcard ${on?'on':''} ${m[2].some(r=>S.roles.has(r))?'open':''}" data-m="${esc(m[0])}">
+      <div class="hd"><span class="cb ${S.mins.has(m[0])?'on':''}" data-mm="${esc(m[0])}"></span>
+      <span class="nm">${esc(m[0])}</span></div>
+      <div class="bl">${esc(m[1])}</div>
+      ${why?`<div class="why">Fits your ${esc(why)}</div>`:''}
+      <button class="btn ghost tg" style="margin:9px 0 0;padding:7px;font-size:11px">${m[2].some(r=>S.roles.has(r))?'Hide roles':'Specific roles'}</button>
+      <div class="roles">${m[2].map(r=>`<div class="rrow" data-r="${esc(r)}">
+        <span class="cb ${S.roles.has(r)?'on':''}"></span>${esc(r)}</div>`).join('')}</div></div>`;};
+
+  return `${rec.length?`<div class="box hi"><h3>Recommended for you</h3>
+    <p>Your survey put <b>${S.gifts.map(label).map(esc).join('</b>, <b>')}</b> at the top. These teams lean on those gifts most.</p>
+    <div style="margin-top:13px">${rec.map(x=>cardFor(x.m, x.hit.map(label).join(' and '))).join('')}</div>
+    <p style="font-size:12.5px;color:var(--muted);margin-top:4px">All three of your gifts are represented above. A suggestion, not a limit — every team below is open to you.</p>
+    </div>`:''}
+   <div class="box"><h3>${rec.length?'All ministries':'Where will you serve?'}</h3>
+   <p style="font-size:13px">${rec.length?'The full list, including the three above.':'Choose a team, or open one to pick a specific role.'}</p>
+   <div style="margin-top:13px">${MIN.map(m=>cardFor(m, null)).join('')}</div>
+   <div class="opt ${S.mins.has('__unsure')?'on':''}" data-mm="__unsure" style="margin-top:12px">
+     <span class="rd"></span><span>I'm not sure yet, but I want to serve.</span></div>
+   </div>`;
+}
+
+function lesson(n,keep){
+  const y = keep ? sc.scrollTop : 0;
+  S.view='lesson';S.cur=n;back.style.display='block';
+  bt.textContent='Level '+n;bs.textContent=lv(n).title;
+  const body=lv(n).blocks.map((b,i)=>render(n,b,i)).join('');
+  const done=S.att[n];
+  sc.innerHTML=`<div class="lh"><div class="lv">Level ${n} &middot; ${esc(lv(n).sab)}</div>
+   <h2>${esc(lv(n).title)}</h2>
+   <p>Follow along as it's taught. ${n<=2?'Fill each blank on your phone when you hear the answer.':''}</p>
+   ${n<=3?'<p style="font-size:11.5px;margin-top:5px;color:#B0741A">Preview: answering is optional — skip ahead freely.</p>':''}
+   <p style="font-size:11.5px;margin-top:5px;color:#9AB0BA">Scripture: Berean Standard Bible &middot; works offline</p>
+   ${done?'<div class="saved">&#10003; Level '+n+' complete — your answers are saved</div>'
+        :'<div class="cnt" id="cnt"></div>'}</div>
+   <div class="pad">${body}
+   ${done?`<button class="btn ghost" id="fin">Back to The Journey</button>`
+        :`<button class="btn" id="fin">Finish Level ${n}</button>`}</div>`;
+  restore(n);wire(n);paint(n);
+  sc.scrollTop=y;
+  if(keep) requestAnimationFrame(()=>{ sc.scrollTop=y; });
+}
+
+function restore(n){
+  sc.querySelectorAll('.slot').forEach(sl=>{
+    const k=n+':'+sl.dataset.b+':'+sl.dataset.s,st=S.slots[k];if(!st)return;
+    const inp=sl.querySelector('input');
+    inp.value=lv(n).blocks[+sl.dataset.b].a[+sl.dataset.s][0].replace(/^./,c=>c.toUpperCase());
+    inp.readOnly=true;sl.classList.add(st==='ok'?'ok':'rev');});
+  sc.querySelectorAll('.blk.f').forEach(bx=>{
+    if([...bx.querySelectorAll('.slot')].every(x=>S.slots[n+':'+x.dataset.b+':'+x.dataset.s]))
+      bx.classList.add('solved');});
+}
+
+function wire(n){
+  sc.querySelectorAll('.rchip').forEach(b=>b.onclick=()=>{
+    const t=document.getElementById('cv-'+b.dataset.cv);
+    const open=t.classList.toggle('show'); b.classList.toggle('on',open);});
+  sc.querySelectorAll('.more').forEach(b=>b.onclick=()=>{
+    const v=b.previousElementSibling,open=v.classList.toggle('clamp');
+    b.textContent=open?'Read the full passage':'Show less';});
+  sc.querySelectorAll('.slot input').forEach(inp=>{
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();check(n,inp);}});
+    inp.addEventListener('blur',()=>{if(inp.value.trim())check(n,inp);});});
+  sc.querySelectorAll('[data-bap]').forEach(o=>o.onclick=()=>{S.baptism=o.dataset.bap;lesson(n,true);});
+  sc.querySelectorAll('[data-g]').forEach(c=>c.onclick=()=>{
+    const g=c.dataset.g,i=S.gifts.indexOf(g);
+    if(i>=0)S.gifts.splice(i,1);else if(S.gifts.length<3)S.gifts.push(g);
+    lesson(n,true);});
+  sc.querySelectorAll('textarea[data-refl]').forEach(ta=>{
+    ta.oninput=()=>{S.refl[+ta.dataset.refl]=ta.value;paint(n);};});
+  const hw=document.getElementById('hw');
+  if(hw)hw.onclick=()=>window.open('https://gifts.churchgrowth.org/spiritual-gifts-survey','_blank');
+  const gv=document.getElementById('give');
+  if(gv)gv.onclick=()=>window.open('https://adventistgiving.org/donate/ANTBS4','_blank');
+  sig();
+  sc.querySelectorAll('.mcard .tg').forEach(b=>b.onclick=()=>{
+    const c=b.closest('.mcard');c.classList.toggle('open');
+    b.textContent=c.classList.contains('open')?'Hide roles':'Specific roles';});
+  sc.querySelectorAll('[data-mm]').forEach(el=>el.onclick=e=>{
+    e.stopPropagation();const v=el.dataset.mm;
+    S.mins.has(v)?S.mins.delete(v):S.mins.add(v);lesson(n,true);});
+  sc.querySelectorAll('.rrow').forEach(r=>r.onclick=()=>{
+    const v=r.dataset.r;S.roles.has(v)?S.roles.delete(v):S.roles.add(v);lesson(n,true);});
+  const fin=document.getElementById('fin');
+  if(fin)fin.onclick=()=>S.att[n]?home():(lessonDone(n)?code(n):nag(n));
+}
+
+function sig(){
+  const c=document.getElementById('sig');if(!c)return;
+  const r=c.getBoundingClientRect();c.width=r.width*2;c.height=r.height*2;
+  const x=c.getContext('2d');x.scale(2,2);x.lineWidth=2.4;x.lineCap='round';x.strokeStyle='#0B2340';
+  let draw=false,any=S.signed;
+  const pos=e=>{const b=c.getBoundingClientRect();const p=e.touches?e.touches[0]:e;
+    return[p.clientX-b.left,p.clientY-b.top];};
+  const start=e=>{e.preventDefault();draw=true;any=true;const[a,b]=pos(e);x.beginPath();x.moveTo(a,b);};
+  const move=e=>{if(!draw)return;e.preventDefault();const[a,b]=pos(e);x.lineTo(a,b);x.stroke();};
+  const end=()=>{draw=false;};
+  c.onmousedown=start;c.onmousemove=move;window.addEventListener('mouseup',end);
+  c.ontouchstart=start;c.ontouchmove=move;c.ontouchend=end;
+  const cl=document.getElementById('clr');
+  if(cl)cl.onclick=()=>{x.clearRect(0,0,c.width,c.height);any=false;S.signed=false;c.classList.remove('has');
+    const s=document.getElementById('sgn');s.disabled=false;s.textContent='I commit';paint(S.cur);};
+  const sg=document.getElementById('sgn');
+  if(sg)sg.onclick=()=>{if(!any){alert('Please sign in the box above.');return;}
+    S.signed=true;c.classList.add('has');sg.disabled=true;sg.textContent='Signed';paint(S.cur);};
+}
+
+function check(n,inp){
+  const sl=inp.parentElement,bx=sl.closest('.blk.f'),
+   bi=+sl.dataset.b,si=+sl.dataset.s,k=n+':'+bi+':'+si;
+  if(S.slots[k])return;
+  const nt=bx.querySelector('.fn'),ans=lv(n).blocks[bi].a[si];
+  if(okAns(inp.value,ans)){
+    S.slots[k]='ok';sl.classList.remove('bad');sl.classList.add('ok');
+    inp.value=ans[0].replace(/^./,c=>c.toUpperCase());inp.readOnly=true;
+    nt.className='fn';nt.textContent='';
+  }else{
+    S.tries[k]=(S.tries[k]||0)+1;
+    sl.classList.remove('bad');void sl.offsetWidth;sl.classList.add('bad');
+    if(S.tries[k]>=3){S.slots[k]='rev';sl.classList.remove('bad');sl.classList.add('rev');
+      inp.value=ans[0].replace(/^./,c=>c.toUpperCase());inp.readOnly=true;
+      nt.className='fn rev';nt.textContent='Answer shown — ask your facilitator about this one.';
+    }else{const lft=3-S.tries[k];nt.className='fn err';
+      nt.textContent='Not quite. '+lft+' more '+(lft===1?'try':'tries')+'.';}
+  }
+  if([...bx.querySelectorAll('.slot')].every(x=>S.slots[n+':'+x.dataset.b+':'+x.dataset.s]))
+    bx.classList.add('solved');
+  paint(n);
+}
+function nag(n){
+  const g=document.getElementById('giftstep');
+  if(g)g.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function paint(n){
+  const c=document.getElementById('cnt');
+  if(c){ c.textContent = n===1 ? filled(1)+' of '+blanks(1)+' blanks filled'
+    : n===2 ? filled(2)+' of '+blanks(2)+' blanks · '+(S.gifts.length===3?'gifts recorded':'gifts not yet recorded')
+    : (n===3 ? [0,1,2].filter(i=>(S.refl[i]||'').trim()).length + ' of 3 reflections written'
+             : (S.signed?'Covenant signed':'Covenant not yet signed')); }
+  pg.style.width = S.att[n] ? '100%'
+    : (n<=2 ? filled(n)/blanks(n)*100 : (lessonDone(n)?100:40)) + '%';
+  const f=document.getElementById('fin');
+  if(f&&!S.att[n]) f.textContent = (n===2 && S.gifts.length<3)
+    ? 'Finish Level 2 — record your three gifts' : 'Finish Level '+n;
+}
+
+function code(n){
+  S.view='code';bs.textContent='';
+  sc.innerHTML=`<div class="fin"><h2>One More Step</h2><div class="rule"></div>
+   <p>Your work is saved. Enter the four-digit code on the screen at the front to record your attendance and complete Level ${n}.</p>
+   <div class="codebox">${[0,1,2,3].map(i=>`<input class="digit" inputmode="numeric" maxlength="1" aria-label="Digit ${i+1}">`).join('')}</div>
+   <div class="cn" id="cn">Today's code is on the last slide — ask your facilitator.</div>
+   <button class="btn" id="go">Complete Level ${n}</button>
+   <button class="btn ghost" id="bk">Back to the lesson</button></div>`;
+  const d=[...sc.querySelectorAll('.digit')];
+  d.forEach((x,i)=>{x.addEventListener('input',()=>{x.value=x.value.replace(/\D/g,'');
+    if(x.value&&i<3)d[i+1].focus(); if(d.every(y=>y.value))sub();});
+    x.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!x.value&&i>0)d[i-1].focus();});});
+  d[0].focus();
+  function sub(){const c=d.map(x=>x.value).join(''),nt=document.getElementById('cn');
+    if(c==='4827'){S.att[n]=true;done(n);}
+    else{nt.className='cn err';nt.textContent="That code isn't right for today's session.";
+      d.forEach(x=>{x.value='';x.classList.add('bad');});
+      setTimeout(()=>d.forEach(x=>x.classList.remove('bad')),400);d[0].focus();}}
+  document.getElementById('go').onclick=sub;
+  document.getElementById('bk').onclick=()=>lesson(n);
+  sc.scrollTop=0;
+}
+
+function done(n){
+  S.view='done';back.style.display='none';pg.style.width='100%';
+  bt.textContent='The Journey';bs.textContent='Arise Miami';
+  const nxt={1:'Level 2 — Discover the Method. Second Sabbath, 9:00 AM.',
+    2:'Level 3 — Discover Your Giftedness. Third Sabbath, 9:00 AM. Complete the gifts survey before then.',
+    3:'Level 4 — Discover Your Impact. Fourth Sabbath, 9:00 AM.',4:null}[n];
+  const picks=[...S.mins].filter(x=>x!=='__unsure').concat([...S.roles]);
+  sc.innerHTML=`<div class="fin">
+   <div style="width:72px;height:72px;border-radius:50%;background:#4CAF7D;margin:12px auto 0;display:grid;place-items:center">
+   <svg viewBox="0 0 24 24" width="35" height="35" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 7"/></svg></div>
+   <h2 style="margin-top:19px">${n===4?'The Journey Complete':'Level '+n+' Complete'}</h2><div class="rule"></div>
+   ${n===1&&(S.baptism==='yes'||S.baptism==='talk')?
+     `<div class="note" style="text-align:left;margin-bottom:14px">Pastor Kendall has been notified about your decision on baptism. Someone will reach out this week.</div>`:''}
+   ${n===4?`<p>You have walked all four levels, signed the covenant, and chosen where to serve.</p>
+     ${picks.length?`<div class="note" style="text-align:left;margin-top:13px;background:#EDF8F2;border-color:#BFE6D3;color:#2E7D55">
+       <b>${esc(picks.join(', '))}</b> — the leader has been notified and will reach out within three days.</div>`:''}
+     <p style="margin-top:14px">Your journey is just beginning. Live in purpose and power.</p>`
+    :`<p><b style="color:#0B2340">Next: ${esc(nxt)}</b></p>`}
+   <button class="btn" id="hm">Back to The Journey</button></div>`;
+  document.getElementById('hm').onclick=home;
+  sc.scrollTop=0;
+}
+back.onclick=()=>S.view==='lesson'?home():lesson(S.cur);
+home();
+</script></body></html>
