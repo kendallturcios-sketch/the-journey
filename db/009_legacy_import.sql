@@ -28,7 +28,7 @@ create table legacy_forms (
 insert into legacy_forms (level_order, form_id, form_url) values
   (1,'480411','https://arisemiami.churchcenter.com/people/forms/480411')
 on conflict do nothing;
--- Levels 2-4 form ids get added once their QR codes are decoded.
+-- Levels 2-4 form ids are added in 018.
 
 -- ---------- the gate, with history honoured ------------------
 
