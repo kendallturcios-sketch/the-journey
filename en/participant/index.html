@@ -96,6 +96,7 @@ body{font-family:var(--b);background:#1a2226;display:flex;align-items:center;jus
 .opt .rd{width:19px;height:19px;border-radius:50%;border:2px solid #C6D3DA;flex:0 0 auto;margin-top:1px;position:relative}
 .opt.on .rd{border-color:var(--grass)}
 .opt.on .rd::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--grass)}
+.opt.sq .rd,.opt.sq.on .rd::after{border-radius:4px}
 .gchip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:#fff;
  border-radius:999px;padding:8px 13px;margin:0 6px 7px 0;font-size:13.5px;cursor:pointer;font-family:var(--b)}
 .gchip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -178,7 +179,7 @@ gift:'<path d="M4 11h16v9H4z"/><path d="M3 7h18v3.4H3z"/><path d="M11.1 7V20h1.8
 target:'<circle cx="12" cy="12" r="8.4" fill="none" stroke="#fff" stroke-width="1.7"/><circle cx="12" cy="12" r="4.4" fill="none" stroke="#fff" stroke-width="1.7"/><circle cx="12" cy="12" r="1.5"/>',
 lock:'<path d="M7 10V8a5 5 0 0 1 10 0v2h1v10H6V10z" fill="none" stroke="#fff" stroke-width="1.7"/>'};
 const S={att:{1:false,2:false,3:false,4:false},slots:{},tries:{},gifts:[],refl:{},
-  baptism:null,signed:false,mins:new Set(),roles:new Set(),view:'home',cur:1};
+  baptism:null,lgHelp:false,signed:false,mins:new Set(),roles:new Set(),view:'home',cur:1};
 const sc=document.getElementById('sc'),pg=document.getElementById('pg'),
  back=document.getElementById('back'),bt=document.getElementById('bt'),bs=document.getElementById('bs');
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -250,7 +251,9 @@ function render(n,b,i){
   if(b.t==='lifegroup_link') return `<div class="box hi"><h3>Choose your Life Group</h3>
     <p>See the Life Groups open right now and pick one to join. Some you can join straight away; others ask you to send a request to the leader.</p>
     <button class="btn teal" id="lg">See open Life Groups</button>
-    <p style="margin-top:10px;font-size:12px;color:var(--muted);word-break:break-all">arisemiami.churchcenter.com/groups/life-groups</p></div>`;
+    <p style="margin-top:10px;font-size:12px;color:var(--muted);word-break:break-all">arisemiami.churchcenter.com/groups/life-groups</p>
+    <p style="margin-top:14px;font-size:13px">Not sure which group fits? Check this and someone from our team will reach out.</p>
+    <div class="opt sq ${S.lgHelp?'on':''}" id="lghelp" style="margin-top:8px"><span class="rd"></span><span>I'd like help finding a Life Group.</span></div></div>`;
   if(b.t==='giving_link') return `<div class="box hi"><h3>Give online</h3>
     <p>Tithes and offerings can be given securely through Adventist Giving.</p>
     <button class="btn teal" id="give">Open Adventist Giving</button>
@@ -419,6 +422,8 @@ function wire(n){
   if(hw)hw.onclick=()=>window.open('https://gifts.churchgrowth.org/spiritual-gifts-survey','_blank');
   const lg=document.getElementById('lg');
   if(lg)lg.onclick=()=>window.open('https://arisemiami.churchcenter.com/groups/life-groups?enrollment=open_signup%2Crequest_to_join&filter=enrollment','_blank');
+  const lh=document.getElementById('lghelp');
+  if(lh)lh.onclick=()=>{S.lgHelp=!S.lgHelp;lh.classList.toggle('on',S.lgHelp);};
   const gv=document.getElementById('give');
   if(gv)gv.onclick=()=>window.open('https://adventistgiving.org/donate/ANTBS4','_blank');
   sig();
