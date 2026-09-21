@@ -435,7 +435,7 @@ function wire(n){
 }
 
 // Covenant celebration: a confetti burst from both bottom corners, then
-// confetti keeps raining from the top for ~9s before fading (~10.5s total).
+// confetti keeps raining from the top for 5s, then fades (~6s total).
 // Self-contained canvas, removed when done. Skipped for reduced motion.
 function confetti(){
   if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
@@ -444,7 +444,7 @@ function confetti(){
   cv.width=W*dpr;cv.height=H*dpr;document.body.appendChild(cv);
   const x=cv.getContext('2d');x.scale(dpr,dpr);
   const col=['#12A5B8','#4CAF7D','#F2C14E','#0B2340','#E8604C','#FFFFFF'];
-  const RAIN=9000,END=10500,ps=[];let n=0;
+  const RAIN=5000,END=6000,ps=[];let n=0;
   const piece=(px,py,vx,vy)=>({x:px,y:py,vx,vy,w:6+Math.random()*6,h:8+Math.random()*8,
     r:Math.random()*6,vr:Math.random()*.3-.15,sw:Math.random()*6,c:col[n++%col.length],sh:Math.random()<.3});
   for(let i=0;i<170;i++){const left=i%2===0,a=((left?-60:-120)+(Math.random()*40-20))*Math.PI/180,s=9+Math.random()*9;
