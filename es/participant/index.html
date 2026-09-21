@@ -626,6 +626,34 @@ function welcome(n){
   sc.scrollTop=0;
 }
 
+// ---- Send each finished level to Planning Center (via the journey-submit function) ----
+// Empty until the server is deployed: nothing is queued or sent while it's blank.
+const SUBMIT_URL='';
+function levelAnswers(n){const a={fb:S.fb[n]||[]};
+  if(n===1){a.about=S.about;a.baptism=S.baptism;}
+  if(n===2)a.lgHelp=S.lgHelp;
+  if(n===3)a.gifts=S.gifts;
+  if(n===4){a.ministries=MIN.map((m,i)=>S.mins.has(m[0])||m[2].some(r=>S.roles.has(r))?i:-1).filter(i=>i>=0);
+    a.unsure=S.mins.has('__unsure');a.roles=[...S.roles];a.signed=S.signed;}
+  return a;}
+const outbox={get(){try{return JSON.parse(localStorage.getItem('journey.outbox')||'[]');}catch(e){return [];}},
+  set(q){try{localStorage.setItem('journey.outbox',JSON.stringify(q));}catch(e){}}};
+function sendLevel(n){if(!SUBMIT_URL||!S.me)return;
+  const q=outbox.get().filter(x=>x.level!==n);
+  q.push({level:n,body:{action:'submit',level:n,lang:document.documentElement.lang,me:S.me,answers:levelAnswers(n)}});
+  outbox.set(q);flush();}
+let flushing=false;
+async function flush(){if(!SUBMIT_URL||flushing)return;flushing=true;
+  try{for(const item of outbox.get()){
+    try{const r=await fetch(SUBMIT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(item.body)});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok&&j.ok)outbox.set(outbox.get().filter(x=>x.level!==item.level));
+      else console.warn('Journey: level',item.level,'not sent yet —',j.error||r.status);
+    }catch(e){break;}}   // offline: stop and try again later
+  }finally{flushing=false;}}
+window.addEventListener('online',flush);
+setTimeout(flush,1500);
+
 function code(n){
   S.view='code';bs.textContent='';
   sc.innerHTML=`<div class="fin"><h2>Un paso más</h2><div class="rule"></div>
@@ -640,7 +668,7 @@ function code(n){
     x.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!x.value&&i>0)d[i-1].focus();});});
   d[0].focus();
   function sub(){const c=d.map(x=>x.value).join(''),nt=document.getElementById('cn');
-    if(c==='4827'){S.att[n]=true;done(n);}
+    if(c==='4827'){S.att[n]=true;sendLevel(n);done(n);}
     else{nt.className='cn err';nt.textContent="Ese código no corresponde a la sesión de hoy.";
       d.forEach(x=>{x.value='';x.classList.add('bad');});
       setTimeout(()=>d.forEach(x=>x.classList.remove('bad')),400);d[0].focus();}}
