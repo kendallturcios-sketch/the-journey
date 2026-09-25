@@ -287,6 +287,126 @@ async function findPerson(name: string) {
   });
 }
 
+// ---------- leader alerts: a follow-up card + a text per request ----------
+// ALERTS secret: "off" (default) | "test" | "live".
+//   test: cards go to the workflow step's default assignee (the owner) and every
+//         text goes to that person's mobile, marked [TEST → leader name].
+//   live: cards are assigned to the ministry's leaders and texts go to them.
+const FOLLOWUP_WORKFLOW = "785600";   // PCO People → Workflows → "The Journey - Follow Up"
+const DONE_PAGE = "https://kendallturcios-sketch.github.io/the-journey/done.html";
+const MINISTRY_NAME: Record<string, string> = {
+  "next steps": "Next Steps", hospitality: "Hospitality", worship: "Worship",
+  "student ministry": "Student Ministry", children: "Children's Ministry / Seekers", "life groups": "Life Groups",
+  production: "Production", creative: "Creative and Social", "behind the scenes": "Behind the Scenes",
+};
+const alertsMode = () => (Deno.env.get("ALERTS") || "off").trim().toLowerCase();
+
+type Contact = { id: string; name: string; phone: string };
+async function contactById(id: string): Promise<Contact> {
+  const j = await pco(`/people/${id}?include=phone_numbers`);
+  const phones = (j.included || []).filter((x: any) => x.type === "PhoneNumber");
+  const m = phones.find((x: any) => /mobile/i.test(x.attributes.location || "")) || phones[0];
+  return {
+    id, name: `${j.data.attributes.first_name} ${j.data.attributes.last_name}`,
+    phone: m ? (m.attributes.e164 || m.attributes.number || "") : "",
+  };
+}
+async function contactByName(name: string): Promise<Contact | null> {
+  const j = await pco(`/people?where[search_name]=${encodeURIComponent(name)}&per_page=2`);
+  return (j.data || []).length === 1 ? contactById(j.data[0].id) : null;
+}
+async function defaultAssignee(): Promise<string> {
+  const j = await pco(`/workflows/${FOLLOWUP_WORKFLOW}/steps?order=sequence`);
+  return String(j.data?.[0]?.attributes?.default_assignee_id || "");
+}
+
+// What each finished level asks the leaders to follow up on.
+function followups(level: number, a: Answers): { ministry: string; what: string }[] {
+  if (level === 2 && a.lgHelp) return [{ ministry: "life groups", what: "asked for help finding a Life Group" }];
+  if (level !== 4) return [];
+  const roles = a.roles?.length ? ` (roles: ${a.roles.join(", ")})` : "";
+  const out = (a.ministries || []).map((i) => MINISTRY_LABEL[i]).filter(Boolean)
+    .map((m) => ({ ministry: m, what: `wants to serve in ${MINISTRY_NAME[m] || m}${roles}` }));
+  if (a.unsure && !out.some((f) => f.ministry === "next steps")) {
+    out.push({ ministry: "next steps", what: "wants to serve but isn't sure where yet" });
+  }
+  return out;
+}
+
+async function sign(text: string) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(Deno.env.get("ADMIN_KEY") || ""),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const s = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(text)));
+  return [...s.slice(0, 12)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+let twilioFrom = "";
+async function sendText(to: string, body: string): Promise<string> {
+  const sid = Deno.env.get("TWILIO_ACCOUNT_SID"), tok = Deno.env.get("TWILIO_AUTH_TOKEN");
+  if (!sid || !tok || !to) return "skipped (no Twilio or no number)";
+  const auth = "Basic " + btoa(`${sid}:${tok}`);
+  if (!twilioFrom) {
+    const n = await (await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/IncomingPhoneNumbers.json`,
+      { headers: { Authorization: auth } })).json();
+    twilioFrom = (n.incoming_phone_numbers || []).find((x: any) => x.capabilities?.sms)?.phone_number || "";
+  }
+  if (!twilioFrom) return "skipped (no Twilio number yet)";
+  const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: "POST", headers: { Authorization: auth, "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ To: to, From: twilioFrom, Body: body }),
+  });
+  const j = await r.json().catch(() => ({}));
+  return r.ok ? `sent ${j.sid}` : `failed: ${j.message || r.status}`;
+}
+
+async function alertLeaders(level: number, me: Me, a: Answers, personId: string | null) {
+  const mode = alertsMode();
+  const todo = followups(level, a);
+  if (mode === "off" || !personId || !todo.length) return [];
+  const owner = mode === "live" ? null : await contactById(await defaultAssignee());
+  const log: string[] = [];
+  for (const f of todo) {
+    const leads = (await Promise.all((leaders()[f.ministry] || []).map(contactByName))).filter(Boolean) as Contact[];
+    // One card per leader (Hospitality has two). No leader found → one card for the default assignee.
+    const targets: (Contact | null)[] = leads.length ? leads : [null];
+    const cards: string[] = [];
+    for (const l of targets) {
+      const attrs = mode === "live" && l ? { assignee_id: l.id } : {};
+      const c = await pco(`/workflows/${FOLLOWUP_WORKFLOW}/cards`, {
+        method: "POST",
+        body: JSON.stringify({ data: { type: "WorkflowCard", attributes: { person_id: personId, ...attrs } } }),
+      });
+      cards.push(c.data.id);
+    }
+    const ids = cards.join(",");
+    const link = `${DONE_PAGE}?p=${personId}&c=${ids}&s=${await sign(`${personId}:${ids}`)}`;
+    const msg = `The Journey: ${me.first} ${me.last} ${f.what}. Please reach out within 3 days: ${me.phone} · ${me.email}. ` +
+      `When you have, tap: ${link}`;
+    for (const l of leads) {
+      const res = owner
+        ? await sendText(owner.phone, `[TEST → ${l.name}] ${msg}`)
+        : await sendText(l.phone, msg);
+      log.push(`${f.ministry} → ${l.name}: card ${ids}, text ${res}`);
+    }
+    if (!leads.length) log.push(`${f.ministry}: no leader found, card ${ids} for the default assignee`);
+  }
+  return log;
+}
+
+// A leader tapped "I reached out": complete that request's card(s).
+async function markDone(p: string, c: string, s: string) {
+  if (!/^\d+$/.test(p) || !/^\d+(,\d+)*$/.test(c) || s !== await sign(`${p}:${c}`)) throw new Problem("This link isn't valid.");
+  let already = true;
+  for (const id of c.split(",")) {
+    const card = await pco(`/people/${p}/workflow_cards/${id}`);
+    if (card.data.attributes.completed_at || card.data.attributes.removed_at) continue;
+    already = false;
+    await pco(`/people/${p}/workflow_cards/${id}/promote`, { method: "POST" });
+  }
+  const person = await pco(`/people/${p}`);
+  return { ok: true, already, first_name: person.data.attributes.first_name };
+}
+
 async function admin(req: Request, body: any) {
   const key = Deno.env.get("ADMIN_KEY");
   if (!key || req.headers.get("x-admin-key") !== key) throw new Problem("not allowed");
@@ -319,6 +439,31 @@ async function admin(req: Request, body: any) {
       verified_numbers: (verified.outgoing_caller_ids || []).length,
     };
   }
+  if (body.action === "admin_alert_test") {
+    // Run the leader alerts for an existing person without submitting a form.
+    const level = Number(body.level);
+    return { ok: true, mode: alertsMode(), log: await alertLeaders(level, checkMe(body.me), checkAnswers(body.answers), String(body.person)) };
+  }
+  if (body.action === "admin_link") {
+    // Build a done link for existing cards (for testing the page).
+    const ids = String(body.cards);
+    return { ok: true, link: `${DONE_PAGE}?p=${body.person}&c=${ids}&s=${await sign(`${body.person}:${ids}`)}` };
+  }
+
+  if (body.action === "admin_workflows") {
+    const j = await pco(`/workflows?per_page=100&include=steps`);
+    const inc = j.included || [];
+    return {
+      ok: true,
+      workflows: (j.data || []).filter((w: any) => /journey/i.test(w.attributes.name || "")).map((w: any) => ({
+        id: w.id, name: w.attributes.name, attributes: w.attributes,
+        steps: (w.relationships?.steps?.data || []).map((r: any) => {
+          const s = inc.find((x: any) => x.type === "WorkflowStep" && x.id === r.id);
+          return { id: r.id, ...(s?.attributes || {}) };
+        }),
+      })),
+    };
+  }
   throw new Problem("unknown admin action");
 }
 
@@ -330,6 +475,9 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     if (String(body.action || "").startsWith("admin_")) {
       return new Response(JSON.stringify(await admin(req, body), null, 2), { headers: h });
+    }
+    if (body.action === "done") {
+      return new Response(JSON.stringify(await markDone(String(body.p || ""), String(body.c || ""), String(body.s || ""))), { headers: h });
     }
     const level = Number(body.level);
     if (!FORMS[level]) throw new Problem("level must be 1-4");
@@ -367,10 +515,10 @@ Deno.serve(async (req) => {
     if (body.action !== "submit") throw new Problem("unknown action");
 
     const res = await pco(`/forms/${FORMS[level]}/form_submissions`, { method: "POST", body: JSON.stringify(payload) });
-    return new Response(JSON.stringify({
-      ok: true, submission: res?.data?.id ?? null,
-      person: res?.data?.relationships?.person?.data?.id ?? null,
-    }), { headers: h });
+    const person = res?.data?.relationships?.person?.data?.id ?? null;
+    // The submission is in; a failed alert must not make the app retry it.
+    try { console.log(await alertLeaders(level, me, answers, person)); } catch (e) { console.error("alerts:", e); }
+    return new Response(JSON.stringify({ ok: true, submission: res?.data?.id ?? null, person }), { headers: h });
   } catch (e) {
     const known = e instanceof Problem;
     console.error(e);

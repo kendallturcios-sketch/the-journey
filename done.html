@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>The Journey — Follow-up</title>
+<meta name="theme-color" content="#082A2E">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0B2340;--teal:#12A5B8;--deep:#082A2E;--indigo:#3F32A8;--grass:#4CAF7D;--red:#B3261E;
+--paper:#F7F9FA;--line:#DDE5E9;--muted:#5E7280;--d:"Archivo",Arial,sans-serif;--b:"Source Sans 3",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--b);background:var(--paper);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+header{background:linear-gradient(118deg,var(--deep) 0%,#0E5A66 42%,var(--indigo) 100%);color:#fff;padding:34px 16px 30px}
+header .in,main{max-width:460px;margin:0 auto}
+.eye{font-family:var(--d);font-size:10px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#7FE3EE}
+h1{font-family:var(--d);font-size:30px;font-weight:800;letter-spacing:-.02em;text-transform:uppercase;line-height:1;margin-top:8px}
+main{padding:24px 16px 60px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 20px}
+p{font-size:16px;line-height:1.55}
+p.es{color:var(--muted);font-size:14.5px;margin-top:6px}
+button{margin-top:18px;width:100%;border:0;border-radius:12px;background:var(--teal);color:#fff;
+ font-family:var(--d);font-size:15px;font-weight:700;letter-spacing:.04em;padding:15px;cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+.ok{color:var(--grass)}.bad{color:var(--red)}
+.big{font-family:var(--d);font-size:20px;font-weight:800;margin-bottom:6px}
+</style></head>
+<body>
+<header><div class="in"><div class="eye">ARISE Miami · The Journey</div><h1>Follow-up</h1></div></header>
+<main><div class="card" id="box">
+  <p>Have you reached out to this person yet? Tap below once you have. It marks them as contacted so nobody falls through the cracks.</p>
+  <p class="es">¿Ya te comunicaste con esta persona? Toca abajo cuando lo hayas hecho.</p>
+  <button id="go">Yes, I reached out · Sí, ya me comuniqué</button>
+</div></main>
+<script>
+const URL_='https://eyplibippxytrlrrmafy.supabase.co/functions/v1/journey-submit';
+const q=new URLSearchParams(location.search),box=document.getElementById('box'),go=document.getElementById('go');
+function show(cls,title,en,es){box.innerHTML='';const t=document.createElement('div');t.className='big '+cls;t.textContent=title;
+  const a=document.createElement('p');a.textContent=en;const b=document.createElement('p');b.className='es';b.textContent=es;box.append(t,a,b);}
+if(!q.get('p')||!q.get('c')||!q.get('s')){show('bad','Link incomplete','This link is missing a piece. Please use the full link from your text.','Este enlace está incompleto. Usa el enlace completo del mensaje.');}
+go&&go.addEventListener('click',async()=>{go.disabled=true;go.textContent='Saving…';
+  try{const r=await fetch(URL_,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'done',p:q.get('p'),c:q.get('c'),s:q.get('s')})});
+    const j=await r.json();
+    if(!j.ok)throw new Error(j.error||'error');
+    const n=j.first_name||'them';
+    j.already?show('ok','Already marked','Someone already marked '+n+' as contacted. Thank you!','Ya estaba marcado como contactado. ¡Gracias!')
+             :show('ok','Thank you!','We marked '+n+' as contacted. Thanks for following up.','Marcamos a '+n+' como contactado. ¡Gracias por dar seguimiento!');
+  }catch(e){go.disabled=false;go.textContent='Try again · Intentar de nuevo';
+    const m=document.createElement('p');m.className='bad';m.style.marginTop='12px';
+    m.textContent=/valid/.test(e.message)?'This link isn’t valid. Please use the link from your text.':'Couldn’t save. Check your connection and try again.';
+    box.querySelectorAll('p.bad').forEach(x=>x.remove());box.append(m);}
+});
+</script>
+</body></html>
