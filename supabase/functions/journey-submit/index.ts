@@ -444,6 +444,13 @@ async function admin(req: Request, body: any) {
     const level = Number(body.level);
     return { ok: true, mode: alertsMode(), log: await alertLeaders(level, checkMe(body.me), checkAnswers(body.answers), String(body.person)) };
   }
+  if (body.action === "admin_form") {
+    // Any form's settings and fields (for planning), no submissions.
+    const id = String(body.form || "");
+    if (!/^\d+$/.test(id)) throw new Problem("form id needed");
+    const f = await pco(`/forms/${id}`);
+    return { ok: true, id, attributes: f.data.attributes, relationships: Object.keys(f.data.relationships || {}), fields: await formFields(id) };
+  }
   if (body.action === "admin_link") {
     // Build a done link for existing cards (for testing the page).
     const ids = String(body.cards);
@@ -455,7 +462,7 @@ async function admin(req: Request, body: any) {
     const inc = j.included || [];
     return {
       ok: true,
-      workflows: (j.data || []).filter((w: any) => /journey/i.test(w.attributes.name || "")).map((w: any) => ({
+      workflows: (j.data || []).filter((w: any) => body.all || /journey/i.test(w.attributes.name || "")).map((w: any) => ({
         id: w.id, name: w.attributes.name, attributes: w.attributes,
         steps: (w.relationships?.steps?.data || []).map((r: any) => {
           const s = inc.find((x: any) => x.type === "WorkflowStep" && x.id === r.id);
