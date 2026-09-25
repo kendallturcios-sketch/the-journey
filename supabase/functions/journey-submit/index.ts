@@ -110,21 +110,29 @@ function wants(level: number, me: Me, a: Answers): Want[] {
 // Planning Center's docs don't spell out every value shape yet, so they
 // all live here. Adjust after the first test submission if needed.
 function encode(field: Field, want: Want): unknown[] {
-  if ("text" in want) return want.text ? [want.text] : [];
+  if ("text" in want) {
+    if (!want.text) return [];
+    // Phone fields want a number and a location, like a profile phone number.
+    return field.type === "phone_number" ? [{ number: want.text, location: "Mobile" }] : [want.text];
+  }
   if ("date" in want) return want.date ? [want.date] : [];            // YYYY-MM-DD
   if ("address" in want) {
     const d = want.address;
-    return d.street ? [{
-      street_line_1: d.street, street_line_2: d.apt || "", city: d.city,
-      state: d.state, zip: d.zip, country_name: d.country || "United States", location: "Home",
-    }] : [];
+    if (!d.street) return [];
+    // Planning Center takes a 2-letter country_code (country_name is read-only).
+    const cc = countryCode(d.country);
+    // Form addresses read the street from `street` (street_line_1 alone is ignored).
+    return [{
+      street: d.apt ? `${d.street}\n${d.apt}` : d.street, street_line_1: d.street, street_line_2: d.apt || "", city: d.city,
+      state: d.state, zip: d.zip, ...(cc ? { country_code: cc } : {}), location: "Home",
+    }];
   }
   if ("bool" in want) {
     // A single checkbox may be modelled with one option, or as a plain boolean.
     return field.options.length ? [field.options[0].id] : [true];
   }
   // Checkbox / dropdown answers: Planning Center wants option IDs, one value per selection.
-  // Built-in profile fields (gender, marital status) may expose no options — send the text.
+  // (Gender and marital status get their options from the church's lists in formFields.)
   if (!field.options.length) return want.options.filter(Boolean);
   return want.options.filter(Boolean).map((label) => {
     const o = field.options.find((o) => norm(o.label).startsWith(norm(label)))
@@ -132,6 +140,21 @@ function encode(field: Field, want: Want): unknown[] {
     if (!o) throw new Problem(`"${field.label}" has no option matching "${label}"`);
     return o.id;
   });
+}
+
+// The app's country box is free text (English or Spanish). Unknown names send no code.
+const COUNTRY: Record<string, string> = {
+  unitedstates: "US", unitedstatesofamerica: "US", usa: "US", us: "US", estadosunidos: "US", eeuu: "US", eua: "US",
+  cuba: "CU", venezuela: "VE", colombia: "CO", mexico: "MX", "méxico": "MX", honduras: "HN", nicaragua: "NI",
+  guatemala: "GT", elsalvador: "SV", costarica: "CR", panama: "PA", "panamá": "PA", dominicanrepublic: "DO",
+  republicadominicana: "DO", "repúblicadominicana": "DO", puertorico: "PR", haiti: "HT", "haití": "HT",
+  jamaica: "JM", peru: "PE", "perú": "PE", ecuador: "EC", argentina: "AR", chile: "CL", bolivia: "BO",
+  paraguay: "PY", uruguay: "UY", brazil: "BR", brasil: "BR", canada: "CA", "canadá": "CA", spain: "ES", "españa": "ES",
+};
+function countryCode(name?: string): string {
+  const t = (name || "United States").trim();
+  if (/^[A-Za-z]{2}$/.test(t)) return t.toUpperCase();
+  return COUNTRY[t.toLowerCase().replace(/[^a-záéíóúñ]/g, "")] || "";
 }
 
 // ---------- Planning Center access ------------------------------------
@@ -146,10 +169,11 @@ function auth() {
 async function pco(path: string, init: RequestInit = {}) {
   const r = await fetch(PCO + path, {
     ...init,
-    headers: { Authorization: auth(), "Content-Type": "application/json", ...(init.headers || {}) },
+    // Form submissions by API exist only from this People API version on.
+    headers: { Authorization: auth(), "Content-Type": "application/json", "X-PCO-API-Version": "2026-06-04", ...(init.headers || {}) },
   });
   const body = await r.text();
-  if (!r.ok) throw new Problem(`Planning Center ${r.status}: ${body.slice(0, 600)}`);
+  if (!r.ok) throw new Problem(`Planning Center ${r.status}: ${body.slice(0, 3000)}`);
   return body ? JSON.parse(body) : {};
 }
 
@@ -163,6 +187,12 @@ async function formFields(formId: string): Promise<Field[]> {
     if (!["string", "text", "heading", "note", "number", "file"].includes(f.type)) {
       const o = await pco(`/forms/${formId}/fields/${d.id}/options?per_page=100`);
       f.options = o.data.map((x: any) => ({ id: x.id, label: x.attributes.label || "" }));
+    }
+    // Gender and marital status use the church's own lists, answered by ID.
+    const list = { gender: "/genders", marital_status: "/marital_statuses" }[f.type];
+    if (list && !f.options.length) {
+      const o = await pco(`${list}?per_page=100`);
+      f.options = o.data.map((x: any) => ({ id: x.id, label: x.attributes.value || "" }));
     }
     return f;
   }));
