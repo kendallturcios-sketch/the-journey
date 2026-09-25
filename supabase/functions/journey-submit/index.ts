@@ -277,6 +277,24 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, form: FORMS[level], fields }, null, 2), { headers: h });
     }
 
+    // Diagnostics: the form's name/status and, for one submission, which fields it filled.
+    // Never returns answers or names — this endpoint is public.
+    if (body.action === "check") {
+      const f = (await pco(`/forms/${FORMS[level]}`)).data.attributes;
+      const out: Record<string, unknown> = {
+        ok: true, form: FORMS[level], name: f.name, active: f.active, archived_at: f.archived_at,
+        submission_count: f.submission_count,
+      };
+      if (/^\d+$/.test(String(body.submission || ""))) {
+        const s = await pco(`/forms/${FORMS[level]}/form_submissions/${body.submission}?include=form_submission_values`);
+        out.submission = {
+          id: s.data.id, created_at: s.data.attributes.created_at,
+          fields_filled: (s.included || []).map((v: any) => v.relationships?.form_field?.data?.id),
+        };
+      }
+      return new Response(JSON.stringify(out, null, 2), { headers: h });
+    }
+
     const me = checkMe(body.me);
     const answers = checkAnswers(body.answers);
     const { _summary, ...payload } = await build(level, me, answers);
