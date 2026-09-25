@@ -32,28 +32,32 @@ and group instructions from the leader guides.
 
 ## Making it yours
 
-Click **Fork** at the top of this page. Everything is plain text near the top of each
-HTML file — church name, lessons, ministries, leaders, session code. No build step, no
-dependencies, no server. Open the file in a browser and it runs.
+Click **Fork** at the top of this page. That makes your own copy under your GitHub
+account. Nothing you change in your fork affects ARISE Miami's app. If you improve
+something you'd like to share back, open a pull request; ARISE reviews it before
+anything changes here.
+
+Everything is plain text near the top of each HTML file: church name, lessons,
+ministries, schedule. No build step, no dependencies. Open the file in a browser and it runs.
+
+- **Your copy sends nothing to ARISE's Planning Center.** Sending only works from
+  ARISE Miami's own site. To record answers in your own Planning Center, deploy your own
+  copy of `supabase/functions/journey-submit` with your own keys, then point
+  `SUBMIT_URL` in the participant apps at it.
+- **Codes:** the facilitator app shows a daily session code and make-up code per level.
+  Add `?preview` to the participant app's address to open every level on any day.
+- **Please keep** `about.html` and the credit line at the bottom of the app:
+  *The Journey © ARISE Miami SDA Church · used by permission.*
 
 Scripture is **Berean Standard Bible** (English) and **Reina-Valera 1909** (Spanish),
 both public domain — nothing to license, and it works with no internet connection.
 
-## Running it for real
+## How ARISE Miami runs it
 
-The `db` folder holds a Postgres schema (works on Supabase) for the full version:
-accounts, saved progress, attendance, automatic notification of ministry leaders when
-someone signs up to serve, and progress synced back to Planning Center.
-
-Level gating is enforced in the database, not the browser.
-
-`db/leaders.example.sql` shows where contact details go. Keep your real copy out of
-version control.
-
-## A note on the demo
-
-Session code is `4827`. Nothing saves across a page refresh. Answering the worksheet
-questions is optional so people can look around quickly — in the real version they're required.
+The apps send each finished level to Planning Center through a small Supabase Edge
+Function (`supabase/functions/journey-submit`). A daily GitHub Action alerts leaders
+about follow-ups, and `board.html` is a passcode-protected staff board. Keys and leader
+contacts live only in server secrets, never in this repo.
 
 ## License
 

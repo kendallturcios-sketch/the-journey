@@ -301,6 +301,7 @@ function home(){
     document.getElementById('notme').onclick=()=>{   // someone else on this phone: start fresh
       try{localStorage.removeItem('journey.me');localStorage.removeItem('journey.progress');}catch(e){}location.reload();};}
 
+  sc.querySelector('.pad').insertAdjacentHTML('beforeend','<p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:22px"><a href="../../about.html" style="color:inherit">The Journey &copy; ARISE Miami SDA Church &middot; used by permission</a></p>');
   sc.scrollTop=0;
 }
 
@@ -749,8 +750,9 @@ function welcome(n){
 }
 
 // ---- Send each finished level to Planning Center (via the journey-submit function) ----
-// Set to '' to switch sending off (nothing is queued or sent while it's blank).
-const SUBMIT_URL='https://eyplibippxytrlrrmafy.supabase.co/functions/v1/journey-submit';
+// Only ARISE Miami's own site sends to ARISE's Planning Center. A copy (fork) hosted anywhere
+// else sends nothing until its church points this at its own server.
+const SUBMIT_URL=location.hostname==='kendallturcios-sketch.github.io'?'https://eyplibippxytrlrrmafy.supabase.co/functions/v1/journey-submit':'';
 function levelAnswers(n){const a={fb:S.fb[n]||[]};
   if(n===1){a.about=S.about;a.baptism=S.baptism;}
   if(n===2)a.lgHelp=S.lgHelp;

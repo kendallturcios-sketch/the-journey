@@ -302,6 +302,7 @@ function home(){
     document.getElementById('notme').onclick=()=>{   // otra persona en este teléfono: empezar de cero
       try{localStorage.removeItem('journey.me');localStorage.removeItem('journey.progress');}catch(e){}location.reload();};}
 
+  sc.querySelector('.pad').insertAdjacentHTML('beforeend','<p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:22px"><a href="../../about.html" style="color:inherit">El Camino &copy; Iglesia Adventista ARISE Miami &middot; usado con permiso</a></p>');
   sc.scrollTop=0;
 }
 
@@ -750,8 +751,9 @@ function welcome(n){
 }
 
 // ---- Send each finished level to Planning Center (via the journey-submit function) ----
-// Set to '' to switch sending off (nothing is queued or sent while it's blank).
-const SUBMIT_URL='https://eyplibippxytrlrrmafy.supabase.co/functions/v1/journey-submit';
+// Solo el sitio de ARISE Miami envía al Planning Center de ARISE. Una copia (fork) alojada en otro
+// lugar no envía nada hasta que su iglesia apunte esto a su propio servidor.
+const SUBMIT_URL=location.hostname==='kendallturcios-sketch.github.io'?'https://eyplibippxytrlrrmafy.supabase.co/functions/v1/journey-submit':'';
 function levelAnswers(n){const a={fb:S.fb[n]||[]};
   if(n===1){a.about=S.about;a.baptism=S.baptism;}
   if(n===2)a.lgHelp=S.lgHelp;
