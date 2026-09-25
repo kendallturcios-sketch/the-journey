@@ -1,0 +1,26 @@
+name: Journey daily check
+
+# Every morning the server looks at yesterday: people who missed a level (→ PT),
+# new and waiting Life Group requests (→ group leaders), and follow-ups still open
+# after 3 or 7 days. This repo is public, so the log prints only counts, never names.
+on:
+  schedule:
+    - cron: "0 12 * * *"   # 8:00 AM Miami in summer (EDT), 7:00 AM in winter (EST)
+  workflow_dispatch: {}
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run the daily follow-up check
+        env:
+          ADMIN_KEY: ${{ secrets.JOURNEY_ADMIN_KEY }}
+        run: |
+          code=$(curl -sS -o out.json -w "%{http_code}" -X POST \
+            "https://eyplibippxytrlrrmafy.supabase.co/functions/v1/journey-submit" \
+            -H "Content-Type: application/json" -H "x-admin-key: $ADMIN_KEY" \
+            -d '{"action":"admin_daily"}')
+          echo "HTTP $code"
+          jq -r '"ok: \(.ok)  lines: \((.log // []) | length)  failures: \([(.log // [])[] | select(test("failed"))] | length)"' out.json
+          rm -f out.json
+          test "$code" = "200"

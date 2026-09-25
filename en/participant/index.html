@@ -219,39 +219,87 @@ function lessonDone(n){
   if(n===2) return S.gifts.length===3;
   return true;
 }
-function unlocked(n){ if(n<=2)return true;
-  if(n===3) return lessonDone(2);
-  return S.att[3]&&lessonDone(3); }
+// ---- Schedule: Level N meets on the Nth Sabbath (Saturday) of every month, 9:00 AM. A 5th Sabbath is off. ----
+const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAY=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const PLACE='Fellowship Hall';
+const PREVIEW=/[?&]preview\b/.test(location.search);   // staff testing: every level opens any day
+const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d;};
+const parseYmd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+function nthSat(y,m,n){const d=new Date(y,m,1);d.setDate(1+(6-d.getDay()+7)%7+7*(n-1));return d;}
+const satIndex=d=>d.getDay()===6?Math.ceil(d.getDate()/7):0;   // 1–5 on a Saturday, else 0
+function nextSession(n,from){from=from||today();
+  for(let i=0;i<3;i++){const d=nthSat(from.getFullYear(),from.getMonth()+i,n);if(d>=from)return d;}}
+const fmtDay=d=>DAY[d.getDay()]+', '+MON[d.getMonth()]+' '+d.getDate();
+const fmtWhen=d=>ymd(d)===ymd(today())?'Today':fmtDay(d);
+// Daily codes, per level — the facilitator app uses the same formula.
+// 'att' = today's attendance code; 'makeup' = opens and completes a level on any day.
+function dcode(kind,n,d){let h=2166136261;
+  for(const c of 'journey|'+kind+'|'+n+'|'+ymd(d||today())){h^=c.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}
+  return String(h%9000+1000);}
+function codeOk(n,c){
+  return (c===dcode('att',n)&&(satIndex(today())===n||PREVIEW))||c===dcode('makeup',n)||(PREVIEW&&c==='4827');}
+
+// Progress stays on this phone: finished levels, gifts, sign-up, make-up unlocks.
+function loadProg(){try{const p=JSON.parse(localStorage.getItem('journey.progress')||'{}');
+  (p.done||[]).forEach(n=>S.att[n]=true);S.gifts=p.gifts||[];S.signup=p.signup||null;S.makeup=p.makeup||{};
+  }catch(e){S.signup=null;S.makeup={};}}
+function saveProg(){try{localStorage.setItem('journey.progress',JSON.stringify({
+  done:[1,2,3,4].filter(n=>S.att[n]),gifts:S.gifts,signup:S.signup,makeup:S.makeup}));}catch(e){}}
+
+const prereq=n=>n===1||(S.att[n-1]&&lessonDone(n-1));
+const openToday=n=>PREVIEW||satIndex(today())===n||S.makeup[n]===ymd(today());
+function unlocked(n){return S.att[n]||(prereq(n)&&openToday(n));}
 function whyLocked(n){
-  if(n===3) return 'Open Level 2 and record your three spiritual gifts at the bottom.';
-  if(!S.att[3]) return 'Attend Level 3 first — the covenant needs you in the room.';
-  return 'Finish the Level 3 reflection.'; }
+  if(!prereq(n)) return n===3?'Complete Level 2 and record your three spiritual gifts first.':'Complete Level '+(n-1)+' first.';
+  return 'Opens '+fmtDay(nextSession(n))+' at 9:00 AM. Doing a make-up session? Tap the card to enter the code.'; }
 
 function home(){
   S.view='home';back.style.display='none';bt.textContent='The Journey';bs.textContent='Arise Miami';
   pg.style.width=(Object.values(S.att).filter(Boolean).length/4*100)+'%';
-  const cards=L.map(l=>{const open=unlocked(l.n),done=S.att[l.n];
-   return `<button class="card ${done?'done':(open?'':'locked')}" data-n="${l.n}" ${open?'':'disabled'}>
+  const cards=L.map(l=>{const open=unlocked(l.n),done=S.att[l.n],mk=!open&&prereq(l.n);
+   const when=done?'&#10003; Completed':open?(PREVIEW?'Preview':'Open today')+' &middot; 9:00 AM &middot; '+PLACE
+     :prereq(l.n)?'Opens '+esc(fmtDay(nextSession(l.n)))+' &middot; 9:00 AM':esc(l.sab)+' &middot; 9:00 AM';
+   return `<button class="card ${done?'done':(open?'':'locked')}" data-n="${l.n}" ${open||mk?'':'disabled'}>
    <span class="ic"><svg viewBox="0 0 24 24">${open?ICON[l.icon]:ICON.lock}</svg></span>
    <span class="me"><span class="lv">Level ${l.n}</span><span class="tt">${esc(l.title)}</span>
    <span class="su">${esc(l.sub)}</span>
-   <span class="dy">${done?'&#10003; Completed':esc(l.sab)+' &middot; 9:00 AM &middot; 90 min'}</span></span>
+   <span class="dy">${when}</span></span>
    <span class="cv">${open?'&#8250;':''}</span></button>`;}).join('');
   const lk=L.filter(l=>!unlocked(l.n));
+  // What's next, for the banner under the hero.
+  const nx=[1,2,3,4].find(n=>!S.att[n]);
+  const su=S.signup&&parseYmd(S.signup.date)>=today()?parseYmd(S.signup.date):null;
+  const nd=!nx?null:unlocked(nx)?today():(nx===1&&su)?su:prereq(nx)?nextSession(nx):null;
+  const banner=!nx?`<b>The Journey complete</b><span>Thank you for walking all four levels.</span>`
+    :(nx===1&&!S.signup)?`<b>Start here &middot; sign up for The Journey</b><span>Pick the month you'll begin. It takes a minute.</span>`
+    :nd?`<b>Level ${nx} &middot; ${esc(fmtWhen(nd))}</b><span>9:00 AM &middot; ${PLACE}</span>`
+    :`<b>Level ${nx}</b><span>${esc(whyLocked(nx))}</span>`;
+  // Level 0: sign up for a start date (hidden once Level 1 is done).
+  const s0=S.signup?parseYmd(S.signup.date):null,past=s0&&s0<today();
+  const card0=S.att[1]?'':`<button class="card ${S.signup&&!past?'done':''}" data-n="0">
+   <span class="ic"><svg viewBox="0 0 24 24">${S.signup&&!past?'<path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>':'<path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>'}</svg></span>
+   <span class="me"><span class="lv">Level 0 &middot; Start here</span>
+   <span class="tt">${!S.signup?'Sign up for The Journey':past?'Pick a new start date':'You’re signed up'}</span>
+   <span class="su">${!S.signup?'Choose the month you’ll begin':past?'You signed up for '+MON[s0.getMonth()]+'. Choose your next start.':'Level 1 begins '+esc(fmtWhen(s0))+' &middot; 9:00 AM'}</span>
+   <span class="dy">${S.signup&&!past?'Tap to change your date':'Takes about a minute'}</span></span>
+   <span class="cv">&#8250;</span></button>`;
   sc.innerHTML=`<div class="hero"><svg class="br" viewBox="0 0 400 260" preserveAspectRatio="none">
    <path d="M-20 210 C 90 150, 150 250, 300 170 S 420 120 430 150" stroke="#fff" stroke-width="26" fill="none" opacity=".35" stroke-linecap="round"/>
    <path d="M-10 60 C 80 20, 190 110, 300 40" stroke="#fff" stroke-width="14" fill="none" opacity=".22" stroke-linecap="round"/>
    <path d="M120 -30 L250 130 L-10 130 Z" fill="#fff" opacity=".08"/></svg>
    <div class="in"><div class="eye">Arise Miami</div><h2>The<br>Journey</h2>
    <p>Four steps to learn your purpose, understand your giftedness, and join us on mission.</p></div></div>
-   <div class="next"><span class="dot"></span><span><b>Level 1 &middot; this Sabbath</b>
-   <span>Saturday 6 September &middot; 9:00 AM &middot; Fellowship Hall</span></span></div>
-   <div class="pad"><div class="st">Your four levels</div>${cards}
+   <div class="next"><span class="dot"></span><span>${banner}</span></div>
+   <div class="pad">${card0?`<div class="st">Before you begin</div>${card0}`:''}<div class="st">Your four levels</div>${cards}
    ${lk.length?`<div class="note"><b>Level ${lk[0].n}</b> — ${esc(whyLocked(lk[0].n))}</div>`:''}</div>`;
-  sc.querySelectorAll('.card[data-n]').forEach(b=>b.onclick=()=>start(+b.dataset.n));
+  sc.querySelectorAll('.card[data-n]').forEach(b=>b.onclick=()=>{const n=+b.dataset.n;
+    n===0?(S.me?signup():welcome(0)):unlocked(n)?start(n):makeup(n);});
   if(S.me){sc.querySelector('.pad').insertAdjacentHTML('beforeend',
     `<div class="who">Signed in as <b>${esc(S.me.first)} ${esc(S.me.last)}</b><button id="notme">Not you?</button></div>`);
-    document.getElementById('notme').onclick=()=>{S.me=null;try{localStorage.removeItem('journey.me');}catch(e){}home();};}
+    document.getElementById('notme').onclick=()=>{   // someone else on this phone: start fresh
+      try{localStorage.removeItem('journey.me');localStorage.removeItem('journey.progress');}catch(e){}location.reload();};}
 
   sc.scrollTop=0;
 }
@@ -438,6 +486,7 @@ function wire(n){
   sc.querySelectorAll('[data-g]').forEach(c=>c.onclick=()=>{
     const g=c.dataset.g,i=S.gifts.indexOf(g);
     if(i>=0)S.gifts.splice(i,1);else if(S.gifts.length<3)S.gifts.push(g);
+    saveProg();
     lesson(n,true);});
   sc.querySelectorAll('textarea[data-refl]').forEach(ta=>{
     ta.oninput=()=>{S.refl[+ta.dataset.refl]=ta.value;paint(n);};});
@@ -594,20 +643,93 @@ function missing(n){const bl=lv(n).blocks,out=[];
   return out;}
 const ready=n=>lessonDone(n)&&!missing(n).length;
 function saveMe(){try{localStorage.setItem('journey.me',JSON.stringify(S.me));}catch(e){}}
-function start(n){S.me?lesson(n):welcome(n);}
+function start(n){if(!S.me)return welcome(n);
+  // Walk-in (or a different month than planned) on a first Sabbath: sign them up for today.
+  if(n===1&&!S.att[1]&&satIndex(today())===1&&(!S.signup||S.signup.date!==ymd(today())))signMeUp(today());
+  lesson(n);}
+function signMeUp(d){S.signup={date:ymd(d),at:ymd(today())};saveProg();
+  sendLevel(0,{start:ymd(d).slice(0,7)});}
+
+// Level 0: pick one of the next three first Sabbaths.
+function signup(){
+  S.view='signup';back.style.display='block';bt.textContent='The Journey';bs.textContent='Sign up';pg.style.width='0%';
+  const ds=[0,1,2].map(i=>nthSat(today().getFullYear(),today().getMonth()+i,1)).filter(d=>d>=today());
+  if(ds.length<3)ds.push(nthSat(today().getFullYear(),today().getMonth()+3,1));
+  let pick=S.signup&&ds.some(d=>ymd(d)===S.signup.date)?S.signup.date:null;
+  sc.innerHTML=`<div class="hero" style="padding-bottom:26px"><svg class="br" viewBox="0 0 400 260" preserveAspectRatio="none">
+   <path d="M-20 210 C 90 150, 150 250, 300 170 S 420 120 430 150" stroke="#fff" stroke-width="26" fill="none" opacity=".35" stroke-linecap="round"/></svg>
+   <div class="in"><div class="eye">The Journey &middot; Level 0</div><h2>Sign up</h2>
+   <p>The Journey is four Sabbaths in a row, one level each week, starting on the first Sabbath of the month.</p></div></div>
+   <div class="pad"><div class="box"><h3>When would you like to start?</h3>
+   ${ds.map(d=>`<div class="opt ${pick===ymd(d)?'on':''}" data-su="${ymd(d)}"><span class="rd"></span>
+     <span><b>${MON[d.getMonth()]}</b><br><span style="font-size:13px;color:var(--muted)">Level 1 &middot; ${esc(fmtWhen(d))} &middot; 9:00 AM &middot; ${PLACE}</span></span></div>`).join('')}
+   <div class="cn" id="sun" style="text-align:left;margin-top:10px"></div></div>
+   <p class="wnote" style="text-align:left;margin:0 2px 14px">By signing up you agree to get texts and emails about The Journey. Message and data rates may apply. Reply STOP to opt out.</p>
+   <button class="btn" id="sgo">Sign me up</button></div>`;
+  sc.querySelectorAll('[data-su]').forEach(o=>o.onclick=()=>{pick=o.dataset.su;
+    sc.querySelectorAll('[data-su]').forEach(x=>x.classList.toggle('on',x===o));});
+  document.getElementById('sgo').onclick=()=>{
+    if(!pick){const e=document.getElementById('sun');e.className='cn err';e.textContent='Choose a start date.';return;}
+    signMeUp(parseYmd(pick));signedUp();};
+  sc.scrollTop=0;
+}
+function signedUp(){
+  S.view='done';back.style.display='none';bs.textContent='Arise Miami';
+  const d=parseYmd(S.signup.date);
+  sc.innerHTML=`<div class="fin">
+   <div style="width:72px;height:72px;border-radius:50%;background:#4CAF7D;margin:12px auto 0;display:grid;place-items:center">
+   <svg viewBox="0 0 24 24" width="35" height="35" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 7"/></svg></div>
+   <h2 style="margin-top:19px">You're Signed Up</h2><div class="rule"></div>
+   <p><b style="color:#0B2340">Level 1 &middot; ${esc(fmtWhen(d))} &middot; 9:00 AM &middot; ${PLACE}</b></p>
+   <p style="margin-top:10px">We'll send you a reminder before it starts. Level 1 opens in this app that morning.</p>
+   <button class="btn" id="hm">Back to The Journey</button></div>`;
+  document.getElementById('hm').onclick=home;
+  sc.scrollTop=0;
+}
+
+// A locked level whose earlier levels are done: the facilitator's make-up code opens it today.
+function makeup(n){
+  S.view='makeup';S.cur=n;back.style.display='block';bs.textContent='';
+  sc.innerHTML=`<div class="fin"><h2>Level ${n} Opens ${esc(fmtDay(nextSession(n)))}</h2><div class="rule"></div>
+   <p>Level ${n} meets on the ${['first','second','third','fourth'][n-1]} Sabbath of every month at 9:00 AM.</p>
+   <p style="margin-top:10px">Doing a make-up session with a leader? Enter the make-up code they give you to open Level ${n} now.</p>
+   <div class="codebox">${[0,1,2,3].map(i=>`<input class="digit" inputmode="numeric" maxlength="1" aria-label="Digit ${i+1}">`).join('')}</div>
+   <div class="cn" id="cn">Your leader finds the make-up code in the facilitator app.</div>
+   <button class="btn" id="go">Open Level ${n}</button>
+   <button class="btn ghost" id="bk">Back to The Journey</button></div>`;
+  digits(c=>{if(c===dcode('makeup',n)){S.makeup[n]=ymd(today());saveProg();start(n);return true;}
+    return "That isn't today's make-up code for Level "+n+'.';});
+  document.getElementById('bk').onclick=home;
+  sc.scrollTop=0;
+}
+// Four digit boxes on the current screen; check(code) returns true or an error message.
+function digits(check){
+  const d=[...sc.querySelectorAll('.digit')],nt=document.getElementById('cn');
+  function sub(){const r=check(d.map(x=>x.value).join(''));if(r===true)return;
+    nt.className='cn err';nt.textContent=r;
+    d.forEach(x=>{x.value='';x.classList.add('bad');});
+    setTimeout(()=>d.forEach(x=>x.classList.remove('bad')),400);d[0].focus();}
+  d.forEach((x,i)=>{x.addEventListener('input',()=>{x.value=x.value.replace(/\D/g,'').slice(-1);
+    if(x.value&&i<3)d[i+1].focus(); if(d.every(y=>y.value))sub();});
+    x.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!x.value&&i>0)d[i-1].focus();});});
+  d[0].focus();
+  document.getElementById('go').onclick=sub;
+}
+
 function welcome(n){
   S.view='welcome';S.cur=n;back.style.display='block';bt.textContent='The Journey';bs.textContent='';pg.style.width='0%';
   sc.innerHTML=`<div class="hero" style="padding-bottom:26px"><svg class="br" viewBox="0 0 400 260" preserveAspectRatio="none">
    <path d="M-20 210 C 90 150, 150 250, 300 170 S 420 120 430 150" stroke="#fff" stroke-width="26" fill="none" opacity=".35" stroke-linecap="round"/>
    <path d="M-10 60 C 80 20, 190 110, 300 40" stroke="#fff" stroke-width="14" fill="none" opacity=".22" stroke-linecap="round"/>
-   <path d="M120 -30 L250 130 L-10 130 Z" fill="#fff" opacity=".08"/></svg><div class="in"><div class="eye">The Journey &middot; Level ${n}</div>
+   <path d="M120 -30 L250 130 L-10 130 Z" fill="#fff" opacity=".08"/></svg><div class="in"><div class="eye">The Journey &middot; ${n?'Level '+n:'Sign up'}</div>
    <h2>Welcome</h2><p>Before we begin, tell us who you are. We'll save your progress and walk this journey with you.</p></div></div>
    <div class="pad"><div class="box">
    <div class="row2">${fld('first','First name','type="text" autocomplete="given-name" autocapitalize="words"','me')}${fld('last','Last name','type="text" autocomplete="family-name" autocapitalize="words"','me')}</div>
    ${fld('email','Email','type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"','me')}
    ${fld('phone','Mobile phone','type="tel" autocomplete="tel" inputmode="tel"','me')}
    ${PRIV}</div>
-   <button class="btn" id="wgo">Start Level ${n}</button><p class="wnote">You'll only be asked this once on this phone.</p></div>`;
+   <button class="btn" id="wgo">${n?'Start Level '+n:'Continue'}</button><p class="wnote">You'll only be asked this once on this phone.</p>
+   <p class="wnote">By continuing you agree to get texts and emails about The Journey. Message and data rates may apply. Reply STOP to opt out.</p></div>`;
   const ins=[...sc.querySelectorAll('[data-me]')];
   ins.forEach(i=>i.addEventListener('input',()=>i.closest('.fld').classList.remove('bad')));
   const ph=sc.querySelector('[data-me="phone"]');
@@ -620,7 +742,7 @@ function welcome(n){
       if(x&&k==='phone'&&x.replace(/\D/g,'').length<10)msg='Enter a 10-digit phone number';
       f.classList.toggle('bad',!!msg);if(msg){er.textContent=msg;if(!first)first=i;}});
     if(first){first.focus();return;}
-    S.me=v;saveMe();lesson(n);};
+    S.me=v;saveMe();n?start(n):signup();};
   document.getElementById('wgo').onclick=go;
   ins.forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go();}}));
   sc.scrollTop=0;
@@ -638,9 +760,10 @@ function levelAnswers(n){const a={fb:S.fb[n]||[]};
   return a;}
 const outbox={get(){try{return JSON.parse(localStorage.getItem('journey.outbox')||'[]');}catch(e){return [];}},
   set(q){try{localStorage.setItem('journey.outbox',JSON.stringify(q));}catch(e){}}};
-function sendLevel(n){if(!SUBMIT_URL||!S.me)return;
+// Level 0 = the sign-up (answers = {start:'YYYY-MM'}).
+function sendLevel(n,ans){if(!SUBMIT_URL||!S.me)return;
   const q=outbox.get().filter(x=>x.level!==n);
-  q.push({level:n,body:{action:'submit',level:n,lang:document.documentElement.lang,me:S.me,answers:levelAnswers(n)}});
+  q.push({level:n,body:{action:'submit',level:n,lang:document.documentElement.lang,me:S.me,answers:ans||levelAnswers(n)}});
   outbox.set(q);flush();}
 let flushing=false;
 async function flush(){if(!SUBMIT_URL||flushing)return;flushing=true;
@@ -662,17 +785,8 @@ function code(n){
    <div class="cn" id="cn">Today's code is on the last slide — ask your facilitator.</div>
    <button class="btn" id="go">Complete Level ${n}</button>
    <button class="btn ghost" id="bk">Back to the lesson</button></div>`;
-  const d=[...sc.querySelectorAll('.digit')];
-  d.forEach((x,i)=>{x.addEventListener('input',()=>{x.value=x.value.replace(/\D/g,'');
-    if(x.value&&i<3)d[i+1].focus(); if(d.every(y=>y.value))sub();});
-    x.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!x.value&&i>0)d[i-1].focus();});});
-  d[0].focus();
-  function sub(){const c=d.map(x=>x.value).join(''),nt=document.getElementById('cn');
-    if(c==='4827'){S.att[n]=true;sendLevel(n);done(n);}
-    else{nt.className='cn err';nt.textContent="That code isn't right for today's session.";
-      d.forEach(x=>{x.value='';x.classList.add('bad');});
-      setTimeout(()=>d.forEach(x=>x.classList.remove('bad')),400);d[0].focus();}}
-  document.getElementById('go').onclick=sub;
+  digits(c=>{if(!codeOk(n,c))return "That code isn't right for today's session.";
+    S.att[n]=true;saveProg();sendLevel(n);done(n);return true;});
   document.getElementById('bk').onclick=()=>lesson(n);
   sc.scrollTop=0;
 }
@@ -680,9 +794,8 @@ function code(n){
 function done(n){
   S.view='done';back.style.display='none';pg.style.width='100%';
   bt.textContent='The Journey';bs.textContent='Arise Miami';
-  const nxt={1:'Level 2 — Discover the Method. Second Sabbath, 9:00 AM.',
-    2:'Level 3 — Discover Your Giftedness. Third Sabbath, 9:00 AM. Complete the gifts survey before then.',
-    3:'Level 4 — Discover Your Impact. Fourth Sabbath, 9:00 AM.',4:null}[n];
+  const tmr=today();tmr.setDate(tmr.getDate()+1);
+  const nxt=n<4?'Level '+(n+1)+' — '+lv(n+1).title+'. '+fmtDay(nextSession(n+1,tmr))+', 9:00 AM.':null;
   const picks=[...S.mins].filter(x=>x!=='__unsure').concat([...S.roles]);
   sc.innerHTML=`<div class="fin">
    <div style="width:72px;height:72px;border-radius:50%;background:#4CAF7D;margin:12px auto 0;display:grid;place-items:center">
@@ -699,7 +812,8 @@ function done(n){
   document.getElementById('hm').onclick=home;
   sc.scrollTop=0;
 }
-back.onclick=()=>S.view==='lesson'||S.view==='welcome'?home():lesson(S.cur);
+back.onclick=()=>['lesson','welcome','signup','makeup'].includes(S.view)?home():lesson(S.cur);
 try{const m=JSON.parse(localStorage.getItem('journey.me')||'null');if(m&&m.email)S.me=m;}catch(e){}
+loadProg();
 home();
 </script></body></html>

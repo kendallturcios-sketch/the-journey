@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Journey Follow-up Board</title>
+<meta name="theme-color" content="#082A2E">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0B2340;--teal:#12A5B8;--deep:#082A2E;--indigo:#3F32A8;--paper:#F7F9FA;--card:#fff;--line:#DDE5E9;--muted:#5E7280;
+--ok:#2E7D55;--okbg:#EDF8F2;--warn:#8A6420;--warnbg:#FFF6E5;--bad:#B3261E;--badbg:#FDECEA;
+--d:"Archivo",Arial,sans-serif;--b:"Source Sans 3",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#E6EEF2;--paper:#0E1719;--card:#152225;--line:#27383C;--muted:#93A7AE;
+--ok:#7FD1A4;--okbg:#14301F;--warn:#F0C674;--warnbg:#33290F;--bad:#F2A09A;--badbg:#3A1715}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--b);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;padding-bottom:60px}
+header{background:linear-gradient(118deg,var(--deep) 0%,#0E5A66 42%,var(--indigo) 100%);color:#fff;padding:26px 16px 22px}
+.in{max-width:1080px;margin:0 auto}
+.eye{font-family:var(--d);font-size:10px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#7FE3EE}
+h1{font-family:var(--d);font-size:28px;font-weight:800;letter-spacing:-.01em;margin-top:6px}
+header p{color:#CFE6EA;font-size:14px;margin-top:4px}
+main{max-width:1080px;margin:0 auto;padding:18px 16px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.tile b{font-family:var(--d);font-size:28px;font-weight:800;display:block}
+.tile span{font-size:13px;color:var(--muted)}
+h2{font-family:var(--d);font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:24px 0 8px}
+.sub{font-size:13.5px;color:var(--muted);margin:-2px 0 10px}
+.tbl{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{font-family:var(--d);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font-family:var(--d);font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.ok{color:var(--ok);background:var(--okbg)}.warn{color:var(--warn);background:var(--warnbg)}.bad{color:var(--bad);background:var(--badbg)}
+.empty{padding:16px;color:var(--muted);font-size:14px}
+.gate{max-width:380px;margin:40px auto;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.gate h2{margin:0 0 10px}
+input{width:100%;font:inherit;font-size:16px;padding:12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
+button{margin-top:12px;width:100%;border:0;border-radius:10px;background:var(--teal);color:#fff;font-family:var(--d);font-weight:700;font-size:14px;padding:13px;cursor:pointer}
+.err{color:var(--bad);font-size:13.5px;margin-top:8px;min-height:1em}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.bar button{width:auto;margin:0;padding:7px 14px;font-size:12.5px;background:var(--ink);color:var(--paper)}
+.note{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:10px 13px;font-size:13.5px;margin-bottom:14px}
+</style></head>
+<body>
+<header><div class="in"><div class="eye">ARISE Miami · The Journey</div><h1>Follow-up Board</h1>
+<p>Everyone who asked for a next step, and how long they've waited.</p></div></header>
+<main id="main"></main>
+<script>
+const URL_='https://eyplibippxytrlrrmafy.supabase.co/functions/v1/journey-submit';
+const main=document.getElementById('main');
+const KEY='journey.board';
+const store={get(){try{return localStorage.getItem(KEY)||'';}catch(e){return '';}},set(v){try{v?localStorage.setItem(KEY,v):localStorage.removeItem(KEY);}catch(e){}}};
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const day=iso=>iso?new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+const dstr=s=>s?new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'';
+function age(d,done){if(done)return '<span class="pill ok">Reached out</span>';
+  const c=d>=7?'bad':d>=3?'warn':'ok';return `<span class="pill ${c}">${d===0?'Today':d===1?'1 day':d+' days'}</span>`;}
+
+function gate(msg){
+  main.innerHTML=`<div class="gate"><h2>Staff passcode</h2>
+   <input id="pc" type="password" autocomplete="current-password" placeholder="Passcode">
+   <button id="go">Open the board</button><div class="err" id="er">${esc(msg||'')}</div></div>`;
+  const pc=document.getElementById('pc');pc.focus();
+  const go=()=>{store.set(pc.value.trim());load();};
+  document.getElementById('go').onclick=go;pc.onkeydown=e=>{if(e.key==='Enter')go();};
+}
+
+async function load(){
+  const key=store.get();if(!key)return gate();
+  main.innerHTML='<p class="sub">Loading from Planning Center…</p>';
+  let j;
+  try{const r=await fetch(URL_,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'board',key})});j=await r.json();}
+  catch(e){main.innerHTML='<p class="sub">Couldn’t reach the server. Check your connection and reload.</p>';return;}
+  if(!j.ok){store.set('');return gate(j.error||'Something went wrong.');}
+  draw(j);
+}
+
+function draw(j){
+  const open=j.cards.filter(c=>!c.completed),late=open.filter(c=>c.days>=3),lg=j.requests;
+  const cards=[...j.cards].sort((a,b)=>(!!a.completed-!!b.completed)||b.days-a.days);
+  const reqs=[...lg].sort((a,b)=>a.days-b.days);
+  const lvName=['Signed up','Finished Level 1','Finished Level 2','Finished Level 3','Completed all 4'];
+  const people=[...j.people].sort((a,b)=>(b.level-a.level)||String(a.name).localeCompare(b.name));
+  main.innerHTML=`
+   ${j.mode!=='live'?`<div class="note"><b>Test mode.</b> Follow-ups are assigned to the default assignee and leaders aren’t texted yet.</div>`:''}
+   <div class="bar" style="margin-bottom:12px"><span>Updated ${esc(new Date(j.at).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'}))}</span>
+    <button id="rf">Refresh</button><button id="lo">Sign out</button></div>
+   <div class="tiles">
+    <div class="tile"><b>${open.length}</b><span>Open follow-ups</span></div>
+    <div class="tile"><b style="color:var(--warn)">${late.length}</b><span>Waiting 3+ days</span></div>
+    <div class="tile"><b>${lg.length}</b><span>Life Group requests waiting</span></div>
+    <div class="tile"><b>${j.people.length}</b><span>People on The Journey</span></div></div>
+
+   <h2>Follow-ups</h2>
+   <p class="sub">Ministry interest, Life Group help, baptism, no-shows and missed levels. A leader marks one done by tapping the link in their text, or by completing the card in Planning Center (People → Workflows → The Journey - Follow Up).</p>
+   <div class="tbl">${cards.length?`<table><thead><tr><th>Person</th><th>Assigned to</th><th>Since</th><th>Status</th></tr></thead><tbody>
+    ${cards.map(c=>`<tr><td>${esc(c.personName)}</td><td>${esc(c.assigneeName||'—')}</td><td>${esc(day(c.created))}</td><td>${age(c.days,c.completed)}</td></tr>`).join('')}
+    </tbody></table>`:'<div class="empty">No follow-ups yet.</div>'}</div>
+
+   <h2>Life Group join requests</h2>
+   <p class="sub">Requests from Church Center that the group leader hasn’t approved yet. Approve them in the Planning Center Groups app.</p>
+   <div class="tbl">${reqs.length?`<table><thead><tr><th>Person</th><th>Group</th><th>Asked</th><th>Waiting</th></tr></thead><tbody>
+    ${reqs.map(r=>`<tr><td>${esc(r.personName)}</td><td>${esc(r.groupName)}</td><td>${esc(day(r.applied))}</td><td>${age(r.days,false)}</td></tr>`).join('')}
+    </tbody></table>`:'<div class="empty">No requests waiting.</div>'}</div>
+
+   <h2>Journey progress</h2>
+   <p class="sub">In-person sign-ups (last 120 days) and levels completed in the app.</p>
+   <div class="tbl">${people.length?`<table><thead><tr><th>Person</th><th>Where they are</th><th>Signed up for</th><th>Last level done</th></tr></thead><tbody>
+    ${people.map(p=>`<tr><td>${esc(p.name)}</td><td>${lvName[p.level]}</td><td>${esc(p.signup?dstr(p.signup):'—')}</td><td>${esc(p.levelAt?day(p.levelAt):'—')}</td></tr>`).join('')}
+    </tbody></table>`:'<div class="empty">No one yet.</div>'}</div>`;
+  document.getElementById('rf').onclick=load;
+  document.getElementById('lo').onclick=()=>{store.set('');gate();};
+}
+load();
+</script>
+</body></html>

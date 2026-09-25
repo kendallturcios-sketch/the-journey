@@ -15,8 +15,9 @@
 
 const PCO = "https://api.planningcenteronline.com/people/v2";
 
-// Planning Center form for each level.
-const FORMS: Record<number, string> = { 1: "480411", 2: "494110", 3: "494099", 4: "494115" };
+// Planning Center form for each level. Level 0 = "The Journey Sign-up" (also filled on Church Center).
+const FORMS: Record<number, string> = { 0: "512178", 1: "480411", 2: "494110", 3: "494099", 4: "494115" };
+const IN_PERSON_LABEL = "in person";   // the app is for the in-person Journey only (for now)
 
 // Where the app is allowed to call from.
 const ORIGINS = [
@@ -54,6 +55,7 @@ type Answers = {
   unsure?: boolean;
   roles?: string[];
   signed?: boolean;
+  start?: string;                   // Level 0: chosen start month, "YYYY-MM"
 };
 
 type Field = { id: string; label: string; type: string; options: { id: string; label: string }[] };
@@ -77,6 +79,12 @@ function wants(level: number, me: Me, a: Answers): Want[] {
   w.push({ find: byType("phone_number"), what: "phone", text: me.phone });
   if (fb[0]) w.push({ find: byLabel("most interesting"), what: "feedback 1", text: fb[0] });
   if (fb[1]) w.push({ find: byLabel("looking forward"), what: "feedback 2", text: fb[1] });
+
+  if (level === 0) {
+    // Month options read "10 - OCT"; they start with the two-digit month.
+    if (a.start) w.push({ find: byLabel("start date"), what: "start month", options: [a.start.slice(5, 7)] });
+    w.push({ find: byLabel("preference"), what: "in person", options: [IN_PERSON_LABEL] });
+  }
 
   if (level === 1) {
     const ab = a.about || {};
@@ -166,11 +174,16 @@ function auth() {
   return "Basic " + btoa(`${id}:${secret}`);
 }
 
+// A path is under People; a full URL (e.g. Groups) is used as is, on that app's default API version.
 async function pco(path: string, init: RequestInit = {}) {
-  const r = await fetch(PCO + path, {
+  const full = path.startsWith("https://");
+  const r = await fetch(full ? path : PCO + path, {
     ...init,
     // Form submissions by API exist only from this People API version on.
-    headers: { Authorization: auth(), "Content-Type": "application/json", "X-PCO-API-Version": "2026-06-04", ...(init.headers || {}) },
+    headers: {
+      Authorization: auth(), "Content-Type": "application/json",
+      ...(full ? {} : { "X-PCO-API-Version": "2026-06-04" }), ...(init.headers || {}),
+    },
   });
   const body = await r.text();
   if (!r.ok) throw new Problem(`Planning Center ${r.status}: ${body.slice(0, 3000)}`);
@@ -249,6 +262,7 @@ function checkAnswers(a: any): Answers {
     unsure: a.unsure === true,
     roles: Array.isArray(a.roles) ? a.roles.map(txt).map((r: string) => r.slice(0, 80)).slice(0, 20) : [],
     signed: a.signed === true,
+    start: /^\d{4}-(0[1-9]|1[0-2])$/.test(a.start || "") ? a.start : undefined,
   };
 }
 
@@ -301,14 +315,17 @@ const MINISTRY_NAME: Record<string, string> = {
 };
 const alertsMode = () => (Deno.env.get("ALERTS") || "off").trim().toLowerCase();
 
-type Contact = { id: string; name: string; phone: string };
+type Contact = { id: string; name: string; phone: string; email: string };
 async function contactById(id: string): Promise<Contact> {
-  const j = await pco(`/people/${id}?include=phone_numbers`);
+  const j = await pco(`/people/${id}?include=phone_numbers,emails`);
   const phones = (j.included || []).filter((x: any) => x.type === "PhoneNumber");
+  const emails = (j.included || []).filter((x: any) => x.type === "Email");
   const m = phones.find((x: any) => /mobile/i.test(x.attributes.location || "")) || phones[0];
+  const e = emails.find((x: any) => x.attributes.primary) || emails[0];
   return {
     id, name: `${j.data.attributes.first_name} ${j.data.attributes.last_name}`,
     phone: m ? (m.attributes.e164 || m.attributes.number || "") : "",
+    email: e ? e.attributes.address : "",
   };
 }
 async function contactByName(name: string): Promise<Contact | null> {
@@ -322,6 +339,9 @@ async function defaultAssignee(): Promise<string> {
 
 // What each finished level asks the leaders to follow up on.
 function followups(level: number, a: Answers): { ministry: string; what: string }[] {
+  // Baptism decisions go to the "baptism" leaders if set, else the workflow's default assignee (the owner).
+  if (level === 1 && a.baptism === "yes") return [{ ministry: "baptism", what: "said YES to baptism" }];
+  if (level === 1 && a.baptism === "talk") return [{ ministry: "baptism", what: "has questions about baptism and would like to talk" }];
   if (level === 2 && a.lgHelp) return [{ ministry: "life groups", what: "asked for help finding a Life Group" }];
   if (level !== 4) return [];
   const roles = a.roles?.length ? ` (roles: ${a.roles.join(", ")})` : "";
@@ -359,38 +379,274 @@ async function sendText(to: string, body: string): Promise<string> {
   return r.ok ? `sent ${j.sid}` : `failed: ${j.message || r.status}`;
 }
 
+// Leaders for a ministry key from JOURNEY_LEADERS; "baptism" falls back to the owner.
+async function leadsFor(key: string): Promise<Contact[]> {
+  const leads = (await Promise.all((leaders()[key] || []).map(contactByName))).filter(Boolean) as Contact[];
+  return leads.length || key !== "baptism" ? leads : [await contactById(await defaultAssignee())];
+}
+
+// In test mode every text goes to the owner, marked with who it was for.
+async function textLeader(l: Contact, msg: string, owner: Contact | null) {
+  return owner ? await sendText(owner.phone, `[TEST → ${l.name}] ${msg}`) : await sendText(l.phone, msg);
+}
+const testOwner = async () => alertsMode() === "live" ? null : await contactById(await defaultAssignee());
+
+// One follow-up: a card per leader (Hospitality has two; none found → one for the default assignee),
+// then a text to each leader: `${who} ${what}. Please reach out… tap: <link>`.
+async function followUp(personId: string, who: string, what: string, contact: string, leads: Contact[], log: string[], tag: string) {
+  const mode = alertsMode(), owner = await testOwner();
+  const cards: string[] = [];
+  for (const l of (leads.length ? leads : [null])) {
+    const attrs = mode === "live" && l ? { assignee_id: l.id } : {};
+    const c = await pco(`/workflows/${FOLLOWUP_WORKFLOW}/cards`, {
+      method: "POST",
+      body: JSON.stringify({ data: { type: "WorkflowCard", attributes: { person_id: personId, ...attrs } } }),
+    });
+    cards.push(c.data.id);
+  }
+  const ids = cards.join(",");
+  const link = `${DONE_PAGE}?p=${personId}&c=${ids}&s=${await sign(`${personId}:${ids}`)}`;
+  const msg = `The Journey: ${who} ${what}. Please reach out within 3 days: ${contact}. When you have, tap: ${link}`;
+  for (const l of leads) log.push(`${tag} → ${l.name}: card ${ids}, text ${await textLeader(l, msg, owner)}`);
+  if (!leads.length) log.push(`${tag}: no leader found, card ${ids} for the default assignee`);
+}
+
 async function alertLeaders(level: number, me: Me, a: Answers, personId: string | null) {
-  const mode = alertsMode();
   const todo = followups(level, a);
-  if (mode === "off" || !personId || !todo.length) return [];
-  const owner = mode === "live" ? null : await contactById(await defaultAssignee());
+  if (alertsMode() === "off" || !personId || !todo.length) return [];
   const log: string[] = [];
   for (const f of todo) {
-    const leads = (await Promise.all((leaders()[f.ministry] || []).map(contactByName))).filter(Boolean) as Contact[];
-    // One card per leader (Hospitality has two). No leader found → one card for the default assignee.
-    const targets: (Contact | null)[] = leads.length ? leads : [null];
-    const cards: string[] = [];
-    for (const l of targets) {
-      const attrs = mode === "live" && l ? { assignee_id: l.id } : {};
-      const c = await pco(`/workflows/${FOLLOWUP_WORKFLOW}/cards`, {
-        method: "POST",
-        body: JSON.stringify({ data: { type: "WorkflowCard", attributes: { person_id: personId, ...attrs } } }),
-      });
-      cards.push(c.data.id);
-    }
-    const ids = cards.join(",");
-    const link = `${DONE_PAGE}?p=${personId}&c=${ids}&s=${await sign(`${personId}:${ids}`)}`;
-    const msg = `The Journey: ${me.first} ${me.last} ${f.what}. Please reach out within 3 days: ${me.phone} · ${me.email}. ` +
-      `When you have, tap: ${link}`;
-    for (const l of leads) {
-      const res = owner
-        ? await sendText(owner.phone, `[TEST → ${l.name}] ${msg}`)
-        : await sendText(l.phone, msg);
-      log.push(`${f.ministry} → ${l.name}: card ${ids}, text ${res}`);
-    }
-    if (!leads.length) log.push(`${f.ministry}: no leader found, card ${ids} for the default assignee`);
+    await followUp(personId, `${me.first} ${me.last}`, f.what, `${me.phone} · ${me.email}`, await leadsFor(f.ministry), log, f.ministry);
   }
   return log;
+}
+
+// ---------- daily job: run each morning by GitHub Actions (admin_daily) ----------
+// Looks at yesterday (Miami time). If it was a level's Sabbath, anyone who should have come and didn't
+// goes to PT (Next Steps). Every day: new Life Group join requests go to that group's leaders, with a
+// nudge at 3 days and an escalation to the Life Groups leader at 7; open follow-up cards get a nudge to
+// their leader at 3 days and an escalation to the owner at 7.
+const APP_START = "2026-09-25";     // the app went live; level submissions before this aren't tracked
+const GROUPS = "https://api.planningcenteronline.com/groups/v2";
+const DAY_MS = 864e5;
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function miamiDay(offset = 0): Date {
+  const s = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(new Date(Date.now() + offset * DAY_MS));
+  return new Date(s + "T00:00:00Z");
+}
+const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+const satNo = (d: Date) => d.getUTCDay() === 6 ? Math.ceil(d.getUTCDate() / 7) : 0;
+function nthSat(y: number, m: number, n: number) {
+  const d = new Date(Date.UTC(y, m, 1)); d.setUTCDate(1 + (6 - d.getUTCDay() + 7) % 7 + 7 * (n - 1)); return d;
+}
+function nextSession(n: number, from: Date) {
+  for (let i = 0; i < 3; i++) { const d = nthSat(from.getUTCFullYear(), from.getUTCMonth() + i, n); if (d >= from) return d; }
+  return from;
+}
+const fmtDay = (d: Date) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+const daysSince = (iso: string) => Math.floor((Date.now() - Date.parse(iso)) / DAY_MS);
+
+// A form's submissions since a date, newest first; with values = field id → display value.
+type Sub = { id: string; person: string; at: string; values: Record<string, string> };
+async function submissions(level: number, since: string, withValues = false): Promise<Sub[]> {
+  const out: Sub[] = [];
+  let url = `/forms/${FORMS[level]}/form_submissions?order=-created_at&per_page=100${withValues ? "&include=form_submission_values" : ""}`;
+  while (url) {
+    const j = await pco(url);
+    const inc = (j.included || []).filter((x: any) => x.type === "FormSubmissionValue");
+    for (const s of j.data || []) {
+      if (s.attributes.created_at < since) return out;
+      const values: Record<string, string> = {};
+      const mine = (s.relationships?.form_submission_values?.data || []).map((r: any) => r.id);
+      for (const v of inc) {
+        if (mine.length ? mine.includes(v.id) : v.relationships?.form_submission?.data?.id === s.id) {
+          values[v.relationships?.form_field?.data?.id] = v.attributes.display_value || "";
+        }
+      }
+      out.push({ id: s.id, person: s.relationships?.person?.data?.id, at: s.attributes.created_at, values });
+    }
+    url = j.links?.next ? String(j.links.next).replace(PCO, "") : "";
+  }
+  return out;
+}
+// person → latest submission time, per level, since a date
+async function latestByLevel(since: string) {
+  const done: Record<number, Map<string, string>> = {};
+  for (const k of [1, 2, 3, 4]) {
+    done[k] = new Map();
+    for (const s of await submissions(k, since)) if (s.person && !done[k].has(s.person)) done[k].set(s.person, s.at);
+  }
+  return done;
+}
+// In-person sign-ups since a date: person → the Level 1 date they chose (latest sign-up wins).
+async function signups(since: string) {
+  const f = await formFields(FORMS[0]);
+  const startF = f.find(byLabel("start date")), prefF = f.find(byLabel("preference"));
+  const out = new Map<string, { start: Date; at: string }>();
+  for (const s of await submissions(0, since, true)) {
+    if (!s.person || out.has(s.person) || !startF) continue;
+    const m = parseInt(s.values[startF.id] || "", 10), pref = (prefF && s.values[prefF.id]) || "";
+    // Older sign-ups have no preference (the question is newer): count them as in person.
+    if (!(m >= 1 && m <= 12) || /on\s*-?\s*line|youth/i.test(pref)) continue;
+    const at = new Date(s.at.slice(0, 10) + "T00:00:00Z");
+    let start = nthSat(at.getUTCFullYear(), m - 1, 1);
+    if (start < at) start = nthSat(at.getUTCFullYear() + 1, m - 1, 1);   // "10 - OCT" = the next October
+    if (+start - +at > 200 * DAY_MS) continue;                            // a month already passed this year: can't tell
+    out.set(s.person, { start, at: s.at });
+  }
+  return out;
+}
+
+async function missedLevel(n: number, D: Date, act: boolean, log: string[]) {
+  const since = new Date(+D - 120 * DAY_MS).toISOString();
+  const done = await latestByLevel(since);
+  const endOfD = new Date(+D + DAY_MS).toISOString();
+  const next = nextSession(n, new Date(+D + DAY_MS));
+  const who: { person: string; why: string }[] = [];
+  if (n === 1) {
+    for (const [person, s] of await signups(since)) {
+      if (isoDay(s.start) === isoDay(D) && !done[1].has(person)) {
+        who.push({ person, why: `signed up for ${MONTHS[D.getUTCMonth()]} but didn't make Level 1 on ${fmtDay(D)}` });
+      }
+    }
+  } else {
+    for (const [person, at] of done[n - 1]) {
+      if (at < APP_START || at >= endOfD) continue;
+      const doneN = done[n].get(person);
+      if (doneN && doneN >= at) continue;
+      who.push({ person, why: `missed Level ${n} on ${fmtDay(D)}` });
+    }
+  }
+  log.push(`Level ${n} on ${isoDay(D)}: ${who.length} to follow up`);
+  const pt = await leadsFor("next steps");
+  for (const w of who) {
+    const c = await contactById(w.person);
+    if (!act) { log.push(`  would alert PT: ${c.name} ${w.why}`); continue; }
+    await followUp(w.person, c.name, `${w.why}. Next chance: Level ${n}, ${fmtDay(next)}, 9:00 AM`,
+      `${c.phone} · ${c.email}`, pt, log, `missed L${n}`);
+  }
+}
+
+// Pending Life Group join requests (Church Center), with their group, leaders and age in days.
+async function lifeGroupRequests() {
+  const types = await pco(`${GROUPS}/group_types?per_page=100`);
+  const lg = (types.data || []).find((t: any) => /life\s*group/i.test(t.attributes.name || ""));
+  const j = await pco(`${GROUPS}/group_applications?where[status]=pending&include=group,person&order=-applied_at&per_page=100`);
+  const inc = j.included || [];
+  const out = [];
+  for (const a of j.data || []) {
+    const g = inc.find((x: any) => x.type === "Group" && x.id === a.relationships?.group?.data?.id);
+    if (lg && g && g.relationships?.group_type?.data?.id && g.relationships.group_type.data.id !== lg.id) continue;
+    out.push({
+      id: a.id, person: a.relationships?.person?.data?.id as string, group: g?.id as string,
+      groupName: (g?.attributes?.name || "a Life Group") as string, applied: a.attributes.applied_at as string,
+      days: daysSince(a.attributes.applied_at),
+    });
+  }
+  return out;
+}
+async function groupLeaders(groupId: string): Promise<Contact[]> {
+  const m = await pco(`${GROUPS}/groups/${groupId}/memberships?where[role]=leader&per_page=25`);
+  return Promise.all((m.data || []).map((x: any) => contactById(x.relationships?.person?.data?.id)));
+}
+async function groupRequestAlerts(act: boolean, log: string[]) {
+  const owner = await testOwner();
+  for (const r of await lifeGroupRequests()) {
+    const stage = r.days < 1 ? "new" : r.days === 3 ? "nudge" : r.days === 7 ? "escalate" : "";
+    if (!stage) continue;
+    const c = await contactById(r.person);
+    const leads = stage === "escalate" ? await leadsFor("life groups") : await groupLeaders(r.group);
+    const msg = stage === "new"
+      ? `The Journey: ${c.name} asked to join your Life Group "${r.groupName}". Please reach out and approve the request within 3 days: ${c.phone} · ${c.email}.`
+      : stage === "nudge"
+      ? `The Journey: reminder, ${c.name}'s request to join "${r.groupName}" has waited 3 days. Please reach out: ${c.phone} · ${c.email}.`
+      : `The Journey: ${c.name}'s request to join "${r.groupName}" has waited 7 days with no response. Please check in with the group leader: ${c.phone} · ${c.email}.`;
+    for (const l of leads) {
+      log.push(`LG ${stage}: ${c.name} → ${l.name}` + (act ? `: text ${await textLeader(l, msg, owner)}` : " (dry run)"));
+    }
+    if (!leads.length) log.push(`LG ${stage}: ${c.name} → no leader found for "${r.groupName}"`);
+  }
+}
+
+// Open cards in the follow-up workflow, with person, assignee and age in days.
+async function openCards() {
+  const out = [];
+  let url = `/workflows/${FOLLOWUP_WORKFLOW}/cards?include=person,assignee&per_page=100`;
+  while (url) {
+    const j = await pco(url);
+    const inc = j.included || [];
+    const name = (id?: string) => {
+      const p = inc.find((x: any) => x.type === "Person" && x.id === id);
+      return p ? `${p.attributes.first_name} ${p.attributes.last_name}` : "";
+    };
+    for (const c of j.data || []) {
+      const a = c.attributes;
+      const person = c.relationships?.person?.data?.id, assignee = c.relationships?.assignee?.data?.id;
+      out.push({
+        id: c.id, person, personName: name(person), assignee, assigneeName: name(assignee),
+        created: a.created_at, completed: a.completed_at, removed: a.removed_at, overdue: !!a.overdue,
+        days: daysSince(a.created_at),
+      });
+    }
+    url = j.links?.next ? String(j.links.next).replace(PCO, "") : "";
+  }
+  return out;
+}
+async function cardNudges(act: boolean, log: string[]) {
+  const owner = await testOwner(), boss = await contactById(await defaultAssignee());
+  for (const c of await openCards()) {
+    if (c.completed || c.removed || (c.days !== 3 && c.days !== 7)) continue;
+    const p = await contactById(c.person);
+    const link = `${DONE_PAGE}?p=${c.person}&c=${c.id}&s=${await sign(`${c.person}:${c.id}`)}`;
+    const to = c.days === 3 && c.assignee ? await contactById(c.assignee) : boss;
+    const msg = c.days === 3
+      ? `The Journey: reminder, ${p.name} is still waiting to hear from you (3 days). ${p.phone} · ${p.email}. When you've reached out, tap: ${link}`
+      : `The Journey: ${p.name} has waited 7 days for a follow-up from ${c.assigneeName || "their leader"}. ${p.phone} · ${p.email}. Tap when handled: ${link}`;
+    log.push(`card ${c.id} day ${c.days}: ${p.name} → ${to.name}` + (act ? `: text ${await textLeader(to, msg, owner)}` : " (dry run)"));
+  }
+}
+
+async function daily(body: any) {
+  const act = alertsMode() !== "off" && !body.dry;
+  const D = /^\d{4}-\d{2}-\d{2}$/.test(body.date || "") ? new Date(body.date + "T00:00:00Z") : miamiDay(-1);
+  const log: string[] = [`daily for ${isoDay(D)} (${act ? alertsMode() : "dry run"})`];
+  const n = satNo(D);
+  const step = async (name: string, f: () => Promise<void>) => { try { await f(); } catch (e) { log.push(`${name} failed: ${(e as Error).message}`); } };
+  if (n >= 1 && n <= 4) await step("missed level", () => missedLevel(n, D, act, log));
+  await step("life group requests", () => groupRequestAlerts(act, log));
+  await step("card nudges", () => cardNudges(act, log));
+  return { ok: true, log };
+}
+
+// ---------- staff board data (needs the STAFF_KEY secret as `key`) ----------
+async function board() {
+  const since = new Date(Date.now() - 120 * DAY_MS).toISOString();
+  const [cards, requests, done, ups] = await Promise.all([openCards(), lifeGroupRequests(), latestByLevel(APP_START), signups(since)]);
+  const ids = new Set<string>([...ups.keys()]);
+  for (const k of [1, 2, 3, 4]) for (const p of done[k].keys()) ids.add(p);
+  const names = new Map<string, string>();
+  for (const c of cards) { if (c.person) names.set(c.person, c.personName); }
+  const people = [];
+  for (const id of ids) {
+    const lv = [1, 2, 3, 4].filter((k) => done[k].has(id));
+    const last = lv.length ? Math.max(...lv) : 0;
+    if (!names.has(id)) {
+      const p = await pco(`/people/${id}`);
+      names.set(id, `${p.data.attributes.first_name} ${p.data.attributes.last_name}`);
+    }
+    people.push({
+      id, name: names.get(id), signup: ups.has(id) ? isoDay(ups.get(id)!.start) : null,
+      level: last, levelAt: last ? done[last].get(id) : null,
+    });
+  }
+  const reqs = [];
+  for (const r of requests) {
+    const p = await pco(`/people/${r.person}`);
+    reqs.push({ ...r, personName: `${p.data.attributes.first_name} ${p.data.attributes.last_name}` });
+  }
+  const recent = (c: any) => !c.removed && (!c.completed || daysSince(c.completed) <= 30);
+  return { ok: true, at: new Date().toISOString(), mode: alertsMode(), cards: cards.filter(recent), requests: reqs, people };
 }
 
 // A leader tapped "I reached out": complete that request's card(s).
@@ -444,6 +700,9 @@ async function admin(req: Request, body: any) {
     const level = Number(body.level);
     return { ok: true, mode: alertsMode(), log: await alertLeaders(level, checkMe(body.me), checkAnswers(body.answers), String(body.person)) };
   }
+  if (body.action === "admin_daily") return await daily(body);
+  if (body.action === "admin_board") return await board();
+
   if (body.action === "admin_form") {
     // Any form's settings and fields (for planning), no submissions.
     const id = String(body.form || "");
@@ -482,6 +741,11 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     if (String(body.action || "").startsWith("admin_")) {
       return new Response(JSON.stringify(await admin(req, body), null, 2), { headers: h });
+    }
+    if (body.action === "board") {
+      const k = Deno.env.get("STAFF_KEY");
+      if (!k || String(body.key || "") !== k) throw new Problem("That passcode isn't right.");
+      return new Response(JSON.stringify(await board()), { headers: h });
     }
     if (body.action === "done") {
       return new Response(JSON.stringify(await markDone(String(body.p || ""), String(body.c || ""), String(body.s || ""))), { headers: h });
