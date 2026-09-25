@@ -627,8 +627,8 @@ function welcome(n){
 }
 
 // ---- Send each finished level to Planning Center (via the journey-submit function) ----
-// Empty until the server is deployed: nothing is queued or sent while it's blank.
-const SUBMIT_URL='';
+// Set to '' to switch sending off (nothing is queued or sent while it's blank).
+const SUBMIT_URL='https://eyplibippxytrlrrmafy.supabase.co/functions/v1/journey-submit';
 function levelAnswers(n){const a={fb:S.fb[n]||[]};
   if(n===1){a.about=S.about;a.baptism=S.baptism;}
   if(n===2)a.lgHelp=S.lgHelp;
