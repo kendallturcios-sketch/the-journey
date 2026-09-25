@@ -263,12 +263,74 @@ function cors(req: Request) {
   };
 }
 
+// ---------- admin checks (need the ADMIN_KEY secret in an x-admin-key header) ----------
+// Leaders live in the JOURNEY_LEADERS secret, not the repo:
+//   {"next steps":["First Last"], "hospitality":["First Last","First Last"], ...}
+// Keys are MINISTRY_LABEL entries plus "life groups" (also the Life Groups leader).
+function leaders(): Record<string, string[]> {
+  try { return JSON.parse(Deno.env.get("JOURNEY_LEADERS") || "{}"); } catch { return {}; }
+}
+
+async function findPerson(name: string) {
+  const j = await pco(`/people?where[search_name]=${encodeURIComponent(name)}&include=emails,phone_numbers&per_page=10`);
+  const inc = j.included || [];
+  return (j.data || []).map((p: any) => {
+    const mine = (type: string) => inc.filter((x: any) => x.type === type &&
+      (p.relationships?.[type === "Email" ? "emails" : "phone_numbers"]?.data || []).some((r: any) => r.id === x.id));
+    const phones = mine("PhoneNumber");
+    return {
+      id: p.id,
+      has_email: mine("Email").length > 0,
+      has_mobile: phones.some((x: any) => /mobile/i.test(x.attributes.location || "")),
+      has_phone: phones.length > 0,
+    };
+  });
+}
+
+async function admin(req: Request, body: any) {
+  const key = Deno.env.get("ADMIN_KEY");
+  if (!key || req.headers.get("x-admin-key") !== key) throw new Problem("not allowed");
+
+  if (body.action === "admin_leaders") {
+    const out: Record<string, unknown>[] = [];
+    for (const [ministry, names] of Object.entries(leaders())) {
+      for (const name of names) {
+        const matches = await findPerson(name);
+        out.push({ ministry, name, matches: matches.length, people: matches });
+      }
+    }
+    return { ok: true, leaders: out };
+  }
+
+  if (body.action === "admin_twilio") {
+    const sid = Deno.env.get("TWILIO_ACCOUNT_SID"), tok = Deno.env.get("TWILIO_AUTH_TOKEN");
+    if (!sid || !tok) throw new Problem("Twilio secrets are not set");
+    const a = "Basic " + btoa(`${sid}:${tok}`);
+    const acct = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}.json`, { headers: { Authorization: a } });
+    if (!acct.ok) throw new Problem(`Twilio ${acct.status}: credentials not accepted`);
+    const aj = await acct.json();
+    const nums = await (await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/IncomingPhoneNumbers.json`,
+      { headers: { Authorization: a } })).json();
+    const verified = await (await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/OutgoingCallerIds.json`,
+      { headers: { Authorization: a } })).json();
+    return {
+      ok: true, status: aj.status, type: aj.type,
+      phone_numbers: (nums.incoming_phone_numbers || []).map((n: any) => ({ number: n.phone_number, sms: n.capabilities?.sms })),
+      verified_numbers: (verified.outgoing_caller_ids || []).length,
+    };
+  }
+  throw new Problem("unknown admin action");
+}
+
 Deno.serve(async (req) => {
   const h = { ...cors(req), "Content-Type": "application/json" };
   if (req.method === "OPTIONS") return new Response(null, { headers: h });
   if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, error: "POST only" }), { status: 405, headers: h });
   try {
     const body = await req.json().catch(() => ({}));
+    if (String(body.action || "").startsWith("admin_")) {
+      return new Response(JSON.stringify(await admin(req, body), null, 2), { headers: h });
+    }
     const level = Number(body.level);
     if (!FORMS[level]) throw new Problem("level must be 1-4");
 
