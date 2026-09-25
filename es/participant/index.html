@@ -222,7 +222,7 @@ function lessonDone(n){
 // ---- Calendario: el Nivel N se reúne el N.º sábado de cada mes, 9:00 AM. El 5.º sábado no hay sesión. ----
 const MON=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DAY=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-const PLACE='Salón de Confraternidad';
+const PLACE='Salón El Camino (The Journey Room)';
 const PREVIEW=/[?&]preview\b/.test(location.search);   // pruebas del equipo: todos los niveles abren cualquier día
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d;};

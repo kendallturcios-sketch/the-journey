@@ -222,7 +222,7 @@ function lessonDone(n){
 // ---- Schedule: Level N meets on the Nth Sabbath (Saturday) of every month, 9:00 AM. A 5th Sabbath is off. ----
 const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const PLACE='Fellowship Hall';
+const PLACE='The Journey Room';
 const PREVIEW=/[?&]preview\b/.test(location.search);   // staff testing: every level opens any day
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d;};
