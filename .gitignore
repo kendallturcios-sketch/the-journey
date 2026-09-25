@@ -2,3 +2,6 @@ supabase/.temp/
 supabase/.branches/
 .env
 .env.*
+
+# Private working notes (kept on the owner's computer only)
+CLAUDE.md
