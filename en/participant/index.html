@@ -280,7 +280,7 @@ function home(){
   const s0=S.signup?parseYmd(S.signup.date):null,past=s0&&s0<today();
   const card0=S.att[1]?'':`<button class="card ${S.signup&&!past?'done':''}" data-n="0">
    <span class="ic"><svg viewBox="0 0 24 24">${S.signup&&!past?'<path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>':'<path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>'}</svg></span>
-   <span class="me"><span class="lv">Level 0 &middot; Start here</span>
+   <span class="me"><span class="lv">Start here</span>
    <span class="tt">${!S.signup?'Sign up for The Journey':past?'Pick a new start date':'You’re signed up'}</span>
    <span class="su">${!S.signup?'Choose the month you’ll begin':past?'You signed up for '+MON[s0.getMonth()]+'. Choose your next start.':'Level 1 begins '+esc(fmtWhen(s0))+' &middot; 9:00 AM'}</span>
    <span class="dy">${S.signup&&!past?'Tap to change your date':'Takes about a minute'}</span></span>
@@ -659,7 +659,7 @@ function signup(){
   let pick=S.signup&&ds.some(d=>ymd(d)===S.signup.date)?S.signup.date:null;
   sc.innerHTML=`<div class="hero" style="padding-bottom:26px"><svg class="br" viewBox="0 0 400 260" preserveAspectRatio="none">
    <path d="M-20 210 C 90 150, 150 250, 300 170 S 420 120 430 150" stroke="#fff" stroke-width="26" fill="none" opacity=".35" stroke-linecap="round"/></svg>
-   <div class="in"><div class="eye">The Journey &middot; Level 0</div><h2>Sign up</h2>
+   <div class="in"><div class="eye">The Journey &middot; Start here</div><h2>Sign up</h2>
    <p>The Journey is four Sabbaths in a row, one level each week, starting on the first Sabbath of the month.</p></div></div>
    <div class="pad"><div class="box"><h3>When would you like to start?</h3>
    ${ds.map(d=>`<div class="opt ${pick===ymd(d)?'on':''}" data-su="${ymd(d)}"><span class="rd"></span>
