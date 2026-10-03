@@ -398,10 +398,20 @@ async function followUp(personId: string, who: string, what: string, contact: st
   const cards: string[] = [];
   for (const l of (leads.length ? leads : [null])) {
     const attrs = mode === "live" && l ? { assignee_id: l.id } : {};
-    const c = await pco(`/workflows/${FOLLOWUP_WORKFLOW}/cards`, {
+    const create = (a: Record<string, string>) => pco(`/workflows/${FOLLOWUP_WORKFLOW}/cards`, {
       method: "POST",
-      body: JSON.stringify({ data: { type: "WorkflowCard", attributes: { person_id: personId, ...attrs } } }),
+      body: JSON.stringify({ data: { type: "WorkflowCard", attributes: { person_id: personId, ...a } } }),
     });
+    let c;
+    try {
+      c = await create(attrs);
+    } catch (e) {
+      // A leader the workflow isn't shared with can't be assigned: give the card to the
+      // default assignee instead so nothing is lost (the leader is still texted).
+      if (!attrs.assignee_id) throw e;
+      log.push(`${tag}: couldn't assign the card to ${l?.name} (${(e as Error).message.slice(0, 120)}); gave it to the default assignee`);
+      c = await create({});
+    }
     cards.push(c.data.id);
   }
   const ids = cards.join(",");
@@ -714,6 +724,22 @@ async function admin(req: Request, body: any) {
     // Build a done link for existing cards (for testing the page).
     const ids = String(body.cards);
     return { ok: true, link: `${DONE_PAGE}?p=${body.person}&c=${ids}&s=${await sign(`${body.person}:${ids}`)}` };
+  }
+
+  if (body.action === "admin_leader_access") {
+    // Can each leader be assigned cards? Lists who the follow-up workflow is shared with
+    // and whether each leader is among them (yes/no only, no contact details).
+    const shares = await pco(`/workflows/${FOLLOWUP_WORKFLOW}/shares?per_page=100`);
+    const shared = new Map<string, string>();
+    for (const s of shares.data || []) shared.set(String(s.relationships?.person?.data?.id ?? s.attributes?.person_id), s.attributes?.permission);
+    const out: Record<string, unknown>[] = [];
+    for (const [ministry, names] of Object.entries(leaders())) {
+      for (const name of names) {
+        const c = await contactByName(name);
+        out.push({ ministry, name, found: !!c, shared: c ? shared.has(c.id) : false, permission: c ? shared.get(c.id) ?? null : null });
+      }
+    }
+    return { ok: true, sharedWith: shared.size, leaders: out };
   }
 
   if (body.action === "admin_workflows") {
