@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SMS Opt-In · The Journey</title>
+<meta name="theme-color" content="#082A2E">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0B2340;--teal:#12A5B8;--deep:#082A2E;--indigo:#3F32A8;--paper:#F7F9FA;--card:#fff;--line:#DDE5E9;--muted:#5E7280;
+--d:"Archivo",Arial,sans-serif;--b:"Source Sans 3",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#E6EEF2;--paper:#0E1719;--card:#152225;--line:#27383C;--muted:#93A7AE}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--b);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;padding-bottom:50px}
+header{background:linear-gradient(118deg,var(--deep) 0%,#0E5A66 42%,var(--indigo) 100%);color:#fff;padding:40px 16px 34px}
+.in,main{max-width:680px;margin:0 auto}
+.eye{font-family:var(--d);font-size:10px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#7FE3EE}
+h1{font-family:var(--d);font-size:34px;font-weight:800;letter-spacing:-.02em;text-transform:uppercase;line-height:1;margin-top:8px}
+main{padding:24px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 22px;margin-bottom:14px}
+.perm{font-family:var(--d);font-size:19px;font-weight:800;line-height:1.3}
+h2{font-family:var(--d);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+p{font-size:15.5px;line-height:1.6}p+p{margin-top:10px}
+.es{color:var(--muted)}
+a{color:var(--teal)}
+</style><style>.shot{display:block;max-width:360px;width:100%;margin:6px auto 0;border:1px solid var(--line);border-radius:18px}
+.box{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:8px}
+.box input{flex:none;width:19px;height:19px;margin-top:2px}ol{margin:6px 0 0 20px}li{font-size:15.5px;line-height:1.6}</style></head>
+<body>
+<header><div class="in"><div class="eye">ARISE Miami · The Journey</div><h1>SMS Opt-In</h1></div></header>
+<main>
+ <div class="card">
+  <h2>How people opt in to text messages</h2>
+  <p>People join The Journey in the ARISE Miami app at <a href="en/participant/">kendallturcios-sketch.github.io/the-journey/en/participant/</a> (Spanish: <a href="es/participant/">/es/participant/</a>). No login is needed.</p>
+  <ol>
+   <li>On the app's home screen, tap <b>Start here · Sign up for The Journey</b>.</li>
+   <li>The welcome screen asks for first name, last name, email and mobile phone.</li>
+   <li>Above the Continue button is an <b>optional, unchecked</b> text-message checkbox. Texts are sent only to people who check it. Leaving it unchecked does not stop anyone from taking part.</li>
+  </ol>
+ </div>
+ <div class="card">
+  <h2>Checkbox wording (exactly as shown in the app)</h2>
+  <label class="box"><input type="checkbox" disabled><span>Yes, text me reminders and updates about The Journey from ARISE Miami. Optional. Up to 8 messages per month. Message and data rates may apply. Reply STOP to opt out or HELP for help. Agreeing is not required to take part. <a href="privacy.html">Privacy Policy</a> · <a href="sms-terms.html">SMS Terms</a></span></label>
+  <p class="es" style="margin-top:12px">Spanish app:</p>
+  <label class="box"><input type="checkbox" disabled><span>Sí, envíenme por mensaje de texto recordatorios y novedades sobre El Camino de ARISE Miami. Opcional. Hasta 8 mensajes al mes. Pueden aplicarse cargos por mensajes y datos. Responde STOP para cancelar o HELP para recibir ayuda. No es necesario aceptar para participar. <a href="privacy.html">Política de privacidad</a> · <a href="sms-terms.html">Términos de SMS</a></span></label>
+ </div>
+ <div class="card">
+  <h2>Screenshot of the consent step</h2>
+  <img class="shot" src="sms-opt-in.jpg" alt="The Journey app welcome screen with name, email and mobile phone fields, and the unchecked optional text-message consent checkbox above the Continue button">
+  <p style="text-align:center;margin-top:8px"><a href="sms-opt-in.jpg">Open the screenshot</a></p>
+ </div>
+ <div class="card">
+  <p><a href="privacy.html">Privacy Policy</a> · <a href="sms-terms.html">SMS Terms</a> · <a href="https://arisemiami.org">arisemiami.org</a></p>
+ </div>
+</main>
+</body></html>
