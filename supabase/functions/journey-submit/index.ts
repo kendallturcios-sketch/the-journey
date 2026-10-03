@@ -688,6 +688,27 @@ async function admin(req: Request, body: any) {
     return { ok: true, leaders: out };
   }
 
+  if (body.action === "admin_twilio_a2p") {
+    // Read-only: where the A2P 10DLC registration stands (brand, then campaign).
+    const sid = Deno.env.get("TWILIO_ACCOUNT_SID"), tok = Deno.env.get("TWILIO_AUTH_TOKEN");
+    if (!sid || !tok) throw new Problem("Twilio secrets are not set");
+    const a = { Authorization: "Basic " + btoa(`${sid}:${tok}`) };
+    const get = async (url: string) => { const r = await fetch(url, { headers: a }); return r.ok ? r.json() : { error: r.status }; };
+    const brands = await get("https://messaging.twilio.com/v1/a2p/BrandRegistrations?PageSize=20");
+    const services = await get("https://messaging.twilio.com/v1/Services?PageSize=20");
+    const profiles = await get("https://trusthub.twilio.com/v1/CustomerProfiles?PageSize=20");
+    return {
+      ok: true,
+      brands: (brands.data || []).map((b: any) => ({
+        sid: b.sid, status: b.status, type: b.brand_type, identity: b.identity_status,
+        failure: b.failure_reason || b.errors || null, created: b.date_created,
+      })),
+      customerProfiles: (profiles.results || []).map((p: any) => ({ sid: p.sid, name: p.friendly_name, status: p.status })),
+      messagingServices: (services.services || []).map((s: any) => ({ sid: s.sid, name: s.friendly_name, usAppToPersonRegistered: s.us_app_to_person_registered })),
+      errors: { brands: brands.error ?? null, services: services.error ?? null, profiles: profiles.error ?? null },
+    };
+  }
+
   if (body.action === "admin_twilio") {
     const sid = Deno.env.get("TWILIO_ACCOUNT_SID"), tok = Deno.env.get("TWILIO_AUTH_TOKEN");
     if (!sid || !tok) throw new Problem("Twilio secrets are not set");
