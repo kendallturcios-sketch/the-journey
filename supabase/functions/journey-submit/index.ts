@@ -704,7 +704,18 @@ async function admin(req: Request, body: any) {
         failure: b.failure_reason || b.errors || null, created: b.date_created,
       })),
       customerProfiles: (profiles.results || []).map((p: any) => ({ sid: p.sid, name: p.friendly_name, status: p.status })),
-      messagingServices: (services.services || []).map((s: any) => ({ sid: s.sid, name: s.friendly_name, usAppToPersonRegistered: s.us_app_to_person_registered })),
+      messagingServices: await Promise.all((services.services || []).map(async (s: any) => {
+        const camp = await get(`https://messaging.twilio.com/v1/Services/${s.sid}/Compliance/Usa2p?PageSize=20`);
+        const nums = await get(`https://messaging.twilio.com/v1/Services/${s.sid}/PhoneNumbers?PageSize=20`);
+        return {
+          sid: s.sid, name: s.friendly_name, usAppToPersonRegistered: s.us_app_to_person_registered,
+          senders: (nums.phone_numbers || []).map((n: any) => n.phone_number),
+          campaigns: (camp.compliance || []).map((c: any) => ({
+            sid: c.sid, status: c.campaign_status, useCase: c.us_app_to_person_usecase,
+            brand: c.brand_registration_sid, errors: c.errors?.length ? c.errors : null, updated: c.date_updated,
+          })),
+        };
+      })),
       errors: { brands: brands.error ?? null, services: services.error ?? null, profiles: profiles.error ?? null },
     };
   }
