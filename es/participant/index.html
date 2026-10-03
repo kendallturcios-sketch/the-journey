@@ -175,6 +175,9 @@ textarea:focus{border-color:var(--teal)}
 .priv svg{flex:0 0 auto}
 .fbq{font-family:var(--d);font-size:14.5px;font-weight:700;line-height:1.35;margin:15px 0 7px}
 .wnote{text-align:center;font-size:12px;color:var(--muted);margin-top:11px}
+.smsopt{display:flex;gap:10px;align-items:flex-start;text-align:left;font-size:12.5px;line-height:1.45;color:var(--muted);margin:14px 2px 4px;cursor:pointer}
+.smsopt input{flex:none;width:19px;height:19px;margin-top:1px;accent-color:var(--teal)}
+.smsopt a{color:var(--teal);font-weight:600}
 .who{text-align:center;font-size:12.5px;color:var(--muted);margin-top:18px}
 .who button{background:none;border:0;color:var(--teal);font-weight:600;cursor:pointer;font-family:var(--b);font-size:12.5px;margin-left:4px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -666,12 +669,15 @@ function signup(){
    ${ds.map(d=>`<div class="opt ${pick===ymd(d)?'on':''}" data-su="${ymd(d)}"><span class="rd"></span>
      <span><b>${cap(MON[d.getMonth()])}</b><br><span style="font-size:13px;color:var(--muted)">Nivel 1 &middot; ${esc(cap(fmtWhen(d)))} &middot; 9:00 AM &middot; ${PLACE}</span></span></div>`).join('')}
    <div class="cn" id="sun" style="text-align:left;margin-top:10px"></div></div>
-   <p class="wnote" style="text-align:left;margin:0 2px 14px">Al inscribirte aceptas recibir mensajes de texto y correos sobre El Camino. Pueden aplicarse cargos por mensajes y datos. Responde STOP para dejar de recibirlos.</p>
+   <label class="smsopt"><input type="checkbox" id="smsok2" ${S.me&&S.me.sms?'checked':''}><span>Sí, envíenme por mensaje de texto recordatorios y novedades sobre El Camino de ARISE Miami. Opcional. Hasta 8 mensajes al mes. Pueden aplicarse cargos por mensajes y datos. Responde STOP para cancelar o HELP para recibir ayuda. No es necesario aceptar para participar. <a href="../../privacy.html" target="_blank">Política de privacidad</a> · <a href="../../sms-terms.html" target="_blank">Términos de SMS</a></span></label>
+   <p class="wnote" style="text-align:left;margin:6px 2px 14px">Te enviaremos recordatorios sobre El Camino por correo electrónico.</p>
    <button class="btn" id="sgo">Inscribirme</button></div>`;
   sc.querySelectorAll('[data-su]').forEach(o=>o.onclick=()=>{pick=o.dataset.su;
     sc.querySelectorAll('[data-su]').forEach(x=>x.classList.toggle('on',x===o));});
   document.getElementById('sgo').onclick=()=>{
     if(!pick){const e=document.getElementById('sun');e.className='cn err';e.textContent='Elige una fecha de inicio.';return;}
+    const ok=document.getElementById('smsok2').checked;
+    if(S.me&&!!S.me.sms!==ok){S.me.sms=ok;S.me.smsAt=ok?new Date().toISOString():null;saveMe();}
     signMeUp(parseYmd(pick));signedUp();};
   sc.scrollTop=0;
 }
@@ -730,8 +736,9 @@ function welcome(n){
    ${fld('email','Correo electrónico','type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"','me')}
    ${fld('phone','Teléfono celular','type="tel" autocomplete="tel" inputmode="tel"','me')}
    ${PRIV}</div>
+   <label class="smsopt"><input type="checkbox" id="smsok" ${S.me&&S.me.sms?'checked':''}><span>Sí, envíenme por mensaje de texto recordatorios y novedades sobre El Camino de ARISE Miami. Opcional. Hasta 8 mensajes al mes. Pueden aplicarse cargos por mensajes y datos. Responde STOP para cancelar o HELP para recibir ayuda. No es necesario aceptar para participar. <a href="../../privacy.html" target="_blank">Política de privacidad</a> · <a href="../../sms-terms.html" target="_blank">Términos de SMS</a></span></label>
    <button class="btn" id="wgo">${n?'Comenzar el Nivel '+n:'Continuar'}</button><p class="wnote">Solo te lo pediremos una vez en este teléfono.</p>
-   <p class="wnote">Al continuar aceptas recibir mensajes de texto y correos sobre El Camino. Pueden aplicarse cargos por mensajes y datos. Responde STOP para dejar de recibirlos.</p></div>`;
+   <p class="wnote">Te enviaremos recordatorios sobre El Camino por correo electrónico.</p></div>`;
   const ins=[...sc.querySelectorAll('[data-me]')];
   ins.forEach(i=>i.addEventListener('input',()=>i.closest('.fld').classList.remove('bad')));
   const ph=sc.querySelector('[data-me="phone"]');
@@ -744,6 +751,8 @@ function welcome(n){
       if(x&&k==='phone'&&x.replace(/\D/g,'').length<10)msg='Escribe un número de 10 dígitos';
       f.classList.toggle('bad',!!msg);if(msg){er.textContent=msg;if(!first)first=i;}});
     if(first){first.focus();return;}
+    const ok=document.getElementById('smsok').checked;
+    v.sms=ok;v.smsAt=ok?new Date().toISOString():null;   // optional SMS consent, with when it was given
     S.me=v;saveMe();n?start(n):signup();};
   document.getElementById('wgo').onclick=go;
   ins.forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go();}}));
