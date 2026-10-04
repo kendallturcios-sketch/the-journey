@@ -41,14 +41,14 @@ const MINISTRY_LABEL = [
   "life groups", "production", "creative", "behind the scenes",
 ];
 const UNSURE_LABEL = "not sure";
-const BAPTISM_LABEL: Record<string, string> = { yes: "yes", talk: "i have questions", not: "not yet" };
+const BAPTISM_LABEL: Record<string, string> = { yes: "yes", talk: "i have questions", not: "not yet", already: "i've already been baptized" };
 const LIFEGROUP_HELP_LABEL = "help finding";
 
 type Me = { first: string; last: string; email: string; phone: string };
 type Answers = {
   fb?: string[];                    // feedback answers, in form order
   about?: Record<string, string>;   // Level 1: bday, gender, marital, street, apt, city, state, zip, country, found
-  baptism?: "yes" | "talk" | "not" | null;
+  baptism?: "yes" | "talk" | "not" | "already" | null;
   lgHelp?: boolean;
   gifts?: string[];                 // app gift keys
   ministries?: number[];            // indexes into MINISTRY_LABEL
@@ -63,7 +63,7 @@ type Field = { id: string; label: string; type: string; options: { id: string; l
 // One entry per answer we want to send: which field, and what to put in it.
 type Want =
   | { find: (f: Field) => boolean; what: string; text: string }
-  | { find: (f: Field) => boolean; what: string; options: string[] }
+  | { find: (f: Field) => boolean; what: string; options: string[]; optional?: boolean }
   | { find: (f: Field) => boolean; what: string; bool: true }
   | { find: (f: Field) => boolean; what: string; address: Record<string, string> }
   | { find: (f: Field) => boolean; what: string; date: string };
@@ -96,7 +96,9 @@ function wants(level: number, me: Me, a: Answers): Want[] {
       address: { street: ab.street, apt: ab.apt, city: ab.city, state: ab.state, zip: ab.zip, country: ab.country },
     });
     w.push({ find: byLabel("how did you", "arise"), what: "how they found ARISE", options: [ab.found] });
-    if (a.baptism) w.push({ find: byLabel("next step"), what: "baptism", options: [BAPTISM_LABEL[a.baptism]] });
+    // optional: if the form doesn't offer the choice yet (e.g. "already baptized" before it's added in PCO),
+    // skip this one answer instead of failing the whole submission.
+    if (a.baptism) w.push({ find: byLabel("next step"), what: "baptism", options: [BAPTISM_LABEL[a.baptism]], optional: true });
   }
   if (level === 2 && a.lgHelp) {
     w.push({ find: byLabel("next step"), what: "life group help", options: [LIFEGROUP_HELP_LABEL] });
@@ -145,9 +147,12 @@ function encode(field: Field, want: Want): unknown[] {
   return want.options.filter(Boolean).map((label) => {
     const o = field.options.find((o) => norm(o.label).startsWith(norm(label)))
       ?? field.options.find((o) => norm(o.label).includes(norm(label)));
-    if (!o) throw new Problem(`"${field.label}" has no option matching "${label}"`);
+    if (!o) {
+      if (want.optional) return "";
+      throw new Problem(`"${field.label}" has no option matching "${label}"`);
+    }
     return o.id;
-  });
+  }).filter(Boolean);
 }
 
 // The app's country box is free text (English or Spanish). Unknown names send no code.
@@ -254,7 +259,7 @@ function checkAnswers(a: any): Answers {
     fb: Array.isArray(a.fb) ? a.fb.slice(0, 2).map(txt) : [],
     about: a.about && typeof a.about === "object"
       ? Object.fromEntries(Object.entries(a.about).map(([k, v]) => [k, txt(v).slice(0, 200)])) : {},
-    baptism: ["yes", "talk", "not"].includes(a.baptism) ? a.baptism : null,
+    baptism: ["yes", "talk", "not", "already"].includes(a.baptism) ? a.baptism : null,
     lgHelp: a.lgHelp === true,
     gifts: Array.isArray(a.gifts) ? a.gifts.filter((g: string) => g in GIFT_LABEL).slice(0, 3) : [],
     ministries: Array.isArray(a.ministries)
