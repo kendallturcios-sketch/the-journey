@@ -688,6 +688,15 @@ async function admin(req: Request, body: any) {
     return { ok: true, leaders: out };
   }
 
+  if (body.action === "admin_test_text") {
+    // One test text to the owner (the follow-up workflow's default assignee) only.
+    const owner = await contactById(await defaultAssignee());
+    if (!owner.phone) throw new Problem("No mobile number on the owner's Planning Center profile");
+    const res = await sendText(owner.phone,
+      "The Journey: test message from ARISE Miami. If you got this, leader texts are working. Reply STOP to opt out.");
+    return { ok: res.startsWith("sent"), to: owner.phone.replace(/\d(?=\d{4})/g, "•"), result: res };
+  }
+
   if (body.action === "admin_twilio_a2p") {
     // Read-only: where the A2P 10DLC registration stands (brand, then campaign).
     const sid = Deno.env.get("TWILIO_ACCOUNT_SID"), tok = Deno.env.get("TWILIO_AUTH_TOKEN");
