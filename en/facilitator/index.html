@@ -77,6 +77,22 @@ header h1{font-family:var(--d);font-size:21px;font-weight:800;letter-spacing:-.0
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--deep);color:#F0D9A8;
  padding:11px 16px;font-size:12.5px;text-align:center;z-index:30}
 .bar a{color:#fff;font-weight:600}
+.share .seg{display:flex;gap:7px;align-items:center;margin:10px 0 14px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.share .seg button{font-family:var(--d);font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;border:1.5px solid var(--line);background:#fff;cursor:pointer;color:var(--muted)}
+.share .seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.shr{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.qr{width:150px;height:150px;flex:none;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;cursor:zoom-in}
+.qr svg{width:100%;height:100%;display:block}
+.shb{flex:1;min-width:220px}
+.lnk{font-size:12.5px;color:var(--muted);word-break:break-all;margin-bottom:10px}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.act{font-family:var(--d);font-size:13px;font-weight:700;padding:10px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.act.pri{background:var(--amber);border-color:var(--amber);color:#fff}
+.shb small{display:block;margin-top:9px;font-size:12px;color:var(--muted)}
+.qrbig{position:fixed;inset:0;background:#fff;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+.qrbig svg{width:min(82vw,70vh);height:min(82vw,70vh)}
+.qrbig p{font-family:var(--d);font-size:20px;font-weight:700;margin-top:18px;text-align:center}
+@media print{.share{display:none}}
 @media print{header,.tabs,.bar{position:static}.note{break-inside:avoid}}
 </style></head><body>
 <header><div class="in">
@@ -164,6 +180,38 @@ function block(b){
   return '';
 }
 
+// ---- Send a level to phones: a link that opens the level, a QR code and a text button ----
+const ARISE_BASE='https://kendallturcios-sketch.github.io/the-journey/';
+const BASE=location.href.replace(/(en|es)\/facilitator\/.*$/,'');   // this copy's own address, so a fork links to itself
+const QR={"en":{"1":"37:/iFjq/wQOQGQbqjJwLt1Xof126k9kq7BV+EZB/qqqq/gGG3zAL5nguvl4eksQ6n2Y65eGIYMaRq51KdvjIddtIJ9pLhXeiswh7MPVztnsinMqEm3vhu1zhvhWi4WLy8/akh4fsQjLU85fz+tn/bzF8KK/r9JG7hIIerwFydCkl1TKnj1JvoAYh6sY/m2iCrwXVOlGbqWM/+l1y7Ltm60iyAfBIEZeR/qpA8PgA==","2":"37:/gljq/wQMQGQbq7pwLt1XIf12619kq7BZeEZB/qqqq/gFO3zAL5HguvkbKksQ622Ya5eWIYsaRq51KdvyKddtIN8NLhXYi9wh7MDOztnsaSMqEmz3hu1zlrxWi4WLy8/akx6fsQjHcc5fy4hH/bzD4iK/r3tC7hILejwFydgsl1TKnj1JvoAQB6sY/muiCrwUZOlGbrYM/+l1q7Ltm6wiyAfBIEZeR/qpA8PgA==","3":"37:/jpjq/wQNQGQbqqpwLt1Xof126k9kq7BReEZB/qqqq/gFK3zAL5LguvlTHksQ6mUY65eW7YsaRqo1KdvjIVdtIF9LLhXey9wh7ND2TtnsIScqEm32hu1zlvhWi4WPi8/akh4fsQjPNc5fy4lX/bzx+iK/r/pS7hILYjwFydAgl1TKHn1JvoAYh6sY/m+iCrwUZOlGbqYM/+l1j7Ltm6yiyAfBLEZeR/rpA8PgA==","4":"37:/q04w/wWgeIQbqXNUrt0uZuF26hZAK7BLAKVB/qqqq/gDI59AJ+BEKS9LqVdhKz28+d6AGWSUfxiuRG0sGTTjGBZPvFz9bcBQK/n63JDI+KCkKog161uott/Ys2SrGYb+FQpudhTvo4d7WSrJxV96hhRkw9Do1vGM+HUhW9QRUEi6jHRtPsAev0kW/pt5aowUXArEbq8ob+F1GK6cW6WGWk7BGKXQf/pybnUgA=="},"es":{"1":"37:/ra4w/wWBeIQbqXtUrt0uZuF26hZAK7BHQKVB/qqqq/gAE59AJ/HEKS8ArVdhKyW8ed6IGWCUf5juRG09GbTjGBJLvFz9DcBQK9vj3JDI84CkKoo8a1uovhvYs2QvGYb+BAJudhRr54d7WWnpxV97jBRkw3Ks1vmO4PUhW8zVUEi6jDRtPsAev0kW/p95aowWXArEbqaob+F1SK6cW6SGWk7BEKXTf/pybmUgA==","2":"37:/ihjq/wQNQGQbqrpwLt1fIf12609kq7BV+EZB/qqqq/gFC3zAL5DguvkSOksQ6HyYa5eWIYsaRi41KdviKVdtIBsLLhXay8wh7NHcTtnsKDMqEm3/Bu1zlrxWi4ULi8/agh6fsQhDV85fzelH/bzm8yK/rzgm7hoJcjwFydgsl1TKHn1JvoAYB6sY/i+iCrwXVOlGbrwM/+l177Ltm6yiyAfBKEZdR/qpA9PgA==","3":"37:/q24w/wWCeIQbqeNUrt0uZuF26hZAK7BDwKVB/qqqq/gDI59AJ/rEKS8ryVdhKz08ed6Y1WiUf5yuRG09GTTjGNJpvFz9TNBQK8jAXJDIWNSkKoola1uorhvYs2QrWYb+BAJudhRvgYd7XQvZxV9PhpRkw1q41vmN+HUhW8xRUEi6DHRtPsAev0kW/p15aowVbArEbqUob+F1DK6cW6UGWk7BHKXTf/oybmUgA==","4":"37:/jrjq/wQvQGQbqjpwLt1Xof126k9kq7BZuEZB/qqqq/gFK3zAL4hguvkzfksQ6mWYa5eOIYcaRi41KdvyIVdtIJttLhXe6swh7OHMztnsgVMqEm/mBu1zjjxWi4UPy8/agxYfsQhPF85fz6hH/bzE+qK/r3AC7hoKYjwFychgl1TKnn1JvoAYh6sY/mmiCrwVVOlGbqwM/+l1m7Ltm6wiyAfBKEZdR/qpA9PgA=="}};   // ready-made (size:bits) for ARISE Miami's address; other sites get the link and buttons without a code
+function qrSvg(s){const [z,b]=s.split(':'),N=+z,bin=atob(b);let d='';
+  for(let i=0;i<N*N;i++)if(bin.charCodeAt(i>>3)>>(7-(i&7))&1)d+='M'+(i%N+2)+' '+(Math.floor(i/N)+2)+'h1v1h-1z';
+  const V=N+4;return `<svg viewBox="0 0 ${V} ${V}" shape-rendering="crispEdges"><rect width="${V}" height="${V}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;}
+const UI=document.documentElement.lang==='es'?'es':'en';
+let shareLang=UI;
+const T={en:{title:n=>'Send Level '+n+' to phones',desc:n=>'Opens The Journey straight to Level '+n+'. Ask each person to open it on their own phone; their progress stays on that phone.',lang:'Message language',text:'Text it',share:'Share',copy:'Copy link',copied:'Copied \u2713',hint:'Tap the code to show it big for the room.',big:'Show the code full screen',scan:n=>'Scan to open Level '+n+' \u00b7 tap to close'},es:{title:n=>'Enviar el Nivel '+n+' a los tel\u00e9fonos',desc:n=>'Abre El Camino directo en el Nivel '+n+'. El progreso de cada persona se queda en su propio tel\u00e9fono.',lang:'Idioma del mensaje',text:'Enviar por texto',share:'Compartir',copy:'Copiar enlace',copied:'Copiado \u2713',hint:'Toca el c\u00f3digo para mostrarlo grande en la pantalla.',big:'Mostrar el c\u00f3digo en pantalla completa',scan:n=>'Escanea para abrir el Nivel '+n+' \u00b7 toca para cerrar'}};
+const shareUrl=(n,lang)=>BASE+lang+'/participant/?level='+n;
+const shareMsg=(n,lang)=>(lang==='es'?'El Camino, Nivel '+n+'. \u00c1brelo en tu propio tel\u00e9fono: ':'The Journey, Level '+n+'. Please open this on your own phone: ')+shareUrl(n,lang);
+function renderShare(l){
+  const n=l.n,t=T[UI],url=shareUrl(n,shareLang),qr=BASE===ARISE_BASE&&QR[shareLang][n]&&qrSvg(QR[shareLang][n]);
+  document.getElementById('share').innerHTML=`<div class="box share"><h3>${t.title(n)}</h3><p>${t.desc(n)}</p>
+   <div class="seg" role="group" aria-label="${t.lang}"><span>${t.lang}</span>${['en','es'].map(k=>`<button data-sl="${k}" class="${k===shareLang?'on':''}">${k==='en'?'English':'Español'}</button>`).join('')}</div>
+   <div class="shr">${qr?`<div class="qr" id="qr" role="button" tabindex="0" aria-label="${t.big}">${qr}</div>`:''}
+   <div class="shb"><div class="lnk">${esc(url)}</div>
+   <div class="acts"><button class="act pri" id="stx">${t.text}</button>${navigator.share?`<button class="act" id="ssh">${t.share}</button>`:''}<button class="act" id="scp">${t.copy}</button></div>
+   ${qr?`<small>${t.hint}</small>`:''}</div></div></div>`;
+  document.querySelectorAll('[data-sl]').forEach(b=>b.onclick=()=>{shareLang=b.dataset.sl;renderShare(l);});
+  document.getElementById('stx').onclick=()=>{location.href='sms:?&body='+encodeURIComponent(shareMsg(n,shareLang));};
+  const sh=document.getElementById('ssh');if(sh)sh.onclick=()=>navigator.share({text:shareMsg(n,shareLang)}).catch(()=>{});
+  document.getElementById('scp').onclick=async e=>{const b=e.currentTarget;
+    try{await navigator.clipboard.writeText(url);}catch(x){const ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(y){}ta.remove();}
+    b.textContent=t.copied;setTimeout(()=>{b.textContent=t.copy;},1800);};
+  const q=document.getElementById('qr');
+  if(q){const big=()=>{const ov=document.createElement('div');ov.className='qrbig';ov.innerHTML=qr+`<p>${t.scan(n)}</p>`;
+      ov.onclick=()=>ov.remove();document.body.appendChild(ov);};
+    q.onclick=big;q.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();big();}};}
+}
+
 function draw(){
   const l=L[cur-1];
   document.getElementById('catt').textContent=dcode('att',l.n);
@@ -178,7 +226,9 @@ function draw(){
     ${nb?`<span><b>${nb}</b> blanks</span>`:''}
     <span>Session code <b>${dcode('att',l.n)}</b>${satIndex(new Date())===l.n?' (today)':' (works only on the '+esc(l.sab)+')'}</span>
     <span>Make-up code <b>${dcode('makeup',l.n)}</b> (today, any time)</span></div></div>
+   <div id="share"></div>
    ${l.blocks.map(block).join('')}`;
+  renderShare(l);
   tabs();
 }
 draw();
