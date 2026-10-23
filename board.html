@@ -104,6 +104,12 @@ function draw(j){
     ${reqs.map(r=>`<tr><td>${esc(r.personName)}</td><td>${esc(r.groupName)}</td><td>${esc(day(r.applied))}</td><td>${age(r.days,false)}</td></tr>`).join('')}
     </tbody></table>`:'<div class="empty">No requests waiting.</div>'}</div>
 
+   <h2>Waiting on the spiritual gifts survey</h2>
+   <p class="sub">Finished Level 2 but haven&rsquo;t saved their top three gifts yet. Level 3 stays locked for them until they do. &ldquo;Texts&rdquo; shows reminder texts sent (up to 2) to people who opted in.</p>
+   <div class="tbl">${(j.giftsWaiting||[]).length?`<table><thead><tr><th>Person</th><th>Finished Level 2</th><th>Waiting</th><th>Texts</th></tr></thead><tbody>
+    ${j.giftsWaiting.map(g=>`<tr><td>${esc(g.name)}</td><td>${esc(day(g.since))}</td><td>${age(g.days,false)}</td><td>${g.texts==null?'<span class="sub" style="margin:0">not opted in</span>':esc(g.texts)}</td></tr>`).join('')}
+    </tbody></table>`:'<div class="empty">No one is waiting.</div>'}</div>
+
    <h2>Journey progress</h2>
    <p class="sub">In-person sign-ups (last 120 days) and levels completed in the app.</p>
    <div class="tbl">${people.length?`<table><thead><tr><th>Person</th><th>Where they are</th><th>Signed up for</th><th>Last level done</th></tr></thead><tbody>

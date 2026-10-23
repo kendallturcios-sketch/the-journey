@@ -62,6 +62,32 @@ a copy button and a QR code that can be shown full screen on the projector. The 
 progress stays on each person's own phone. Copies of the app on other addresses get the link and
 buttons without the QR code (the QR codes are made for ARISE Miami's address).
 
+### Short address
+
+`/go/` opens the app in the visitor's language, and `/go/?level=3` opens a level (the app still asks who they are
+first). Point a short address you own (for example `arisemiami.org/journey`) at it.
+
+### Someone on a new phone
+
+Progress is stored on each person's own phone. When someone finished earlier levels on another phone, the
+facilitator app shows a daily **let-in code** (third box in the header). Entering it on the participant's
+phone marks their earlier levels as done on that phone only. Nothing is sent to Planning Center, it expires
+at midnight, and it never skips the day's schedule.
+
+### Home-screen tip
+
+On iPhone and Android the home screen shows a short "add to your home screen" tip, once, until dismissed
+or until the app is opened from the home screen.
+
+### Spiritual gifts: staff board and reminder texts
+
+When someone saves their top three gifts, the app tells the server (table `journey_people`, see
+`db/019_journey_people.sql`; only the server can read it). Their gifts still go to Planning Center with the
+Level 3 form. The staff board lists everyone who finished Level 2 but hasn't saved their gifts.
+Reminder texts are **off by default**. Set the `GIFT_REMINDERS` secret to `test` (texts the owner only) and
+then `live` (texts people who ticked the optional text-message box, at most twice each, 3 days after
+Level 2 and 4 days later). Replying STOP stops them.
+
 ## How ARISE Miami runs it
 
 The apps send each finished level to Planning Center through a small Supabase Edge
