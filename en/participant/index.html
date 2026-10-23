@@ -232,7 +232,12 @@ const giftsDone=()=>S.gifts.length===3;
 const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const PLACE='The Journey Room';
-const PREVIEW=/[?&]preview\b/.test(location.search);   // staff testing: every level opens any day
+// ?review: a staff walk-through. Every level and the gifts step open, nothing is required, and nothing is saved or sent
+// (this phone's real saved name and progress are left alone). ?preview: levels open any day, but real submissions still go out.
+const REVIEW=/[?&]review\b/.test(location.search);
+const PREVIEW=REVIEW||/[?&]preview\b/.test(location.search);   // staff testing: every level opens any day
+const MEMSTORE=(()=>{const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v);},removeItem:k=>{delete m[k];}};})();
+const LS=REVIEW?MEMSTORE:(()=>{try{return window.localStorage;}catch(e){return MEMSTORE;}})();
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d;};
 const parseYmd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
@@ -251,13 +256,13 @@ function codeOk(n,c){
   return (c===dcode('att',n)&&(satIndex(today())===n||PREVIEW))||c===dcode('makeup',n)||(PREVIEW&&c==='4827');}
 
 // Progress stays on this phone: finished levels, gifts, sign-up, make-up unlocks.
-function loadProg(){try{const p=JSON.parse(localStorage.getItem('journey.progress')||'{}');
+function loadProg(){try{const p=JSON.parse(LS.getItem('journey.progress')||'{}');
   (p.done||[]).forEach(n=>S.att[n]=true);S.gifts=p.gifts||[];S.signup=p.signup||null;S.makeup=p.makeup||{};
   }catch(e){S.signup=null;S.makeup={};}}
-function saveProg(){try{localStorage.setItem('journey.progress',JSON.stringify({
+function saveProg(){try{LS.setItem('journey.progress',JSON.stringify({
   done:[1,2,3,4].filter(n=>S.att[n]),gifts:S.gifts,signup:S.signup,makeup:S.makeup}));}catch(e){}}
 
-const prereq=n=>n===1||(S.att[n-1]&&lessonDone(n-1)&&(n!==3||giftsDone()));
+const prereq=n=>REVIEW||n===1||(S.att[n-1]&&lessonDone(n-1)&&(n!==3||giftsDone()));
 const openToday=n=>PREVIEW||satIndex(today())===n||S.makeup[n]===ymd(today());
 function unlocked(n){return S.att[n]||(prereq(n)&&openToday(n));}
 function whyLocked(n){
@@ -267,13 +272,13 @@ function whyLocked(n){
 // Several people can end up on one phone (a partner opens a texted link). Whoever signs out is stashed by
 // email and gets their progress back the next time they sign in with that email.
 function stashMe(){try{if(!S.me||!S.me.email)return;
-  const all=JSON.parse(localStorage.getItem('journey.people')||'{}');
-  all[S.me.email.toLowerCase()]={me:S.me,progress:JSON.parse(localStorage.getItem('journey.progress')||'{}')};
-  localStorage.setItem('journey.people',JSON.stringify(all));}catch(e){}}
-function restoreFor(email){try{const all=JSON.parse(localStorage.getItem('journey.people')||'{}'),k=(email||'').toLowerCase(),p=all[k];
+  const all=JSON.parse(LS.getItem('journey.people')||'{}');
+  all[S.me.email.toLowerCase()]={me:S.me,progress:JSON.parse(LS.getItem('journey.progress')||'{}')};
+  LS.setItem('journey.people',JSON.stringify(all));}catch(e){}}
+function restoreFor(email){try{const all=JSON.parse(LS.getItem('journey.people')||'{}'),k=(email||'').toLowerCase(),p=all[k];
   if(!p)return;const pr=p.progress||{};S.att={1:false,2:false,3:false,4:false};(pr.done||[]).forEach(n=>S.att[n]=true);
   S.gifts=pr.gifts||[];S.signup=pr.signup||null;S.makeup=pr.makeup||{};
-  delete all[k];localStorage.setItem('journey.people',JSON.stringify(all));saveProg();}catch(e){}}
+  delete all[k];LS.setItem('journey.people',JSON.stringify(all));saveProg();}catch(e){}}
 // Where a level link or card leads: the level if it's open, the make-up code screen if it will be, otherwise home.
 function route(n){S.att[n]?home():unlocked(n)?start(n):prereq(n)?makeup(n):(n>=2&&!S.att[n-1])?letin(n):home();}
 function whoIsThis(n){
@@ -286,13 +291,13 @@ function whoIsThis(n){
    <button class="btn ghost" id="wn">No, I'm someone else &mdash; fill in my name</button>
    <p class="wnote">Best of all, open the link on your own phone. If you continue here as yourself, this phone's owner keeps their progress and gets it back when they sign in again.</p></div>`;
   document.getElementById('wy').onclick=()=>route(n);
-  document.getElementById('wn').onclick=()=>{stashMe();try{localStorage.removeItem('journey.me');localStorage.removeItem('journey.progress');}catch(e){}
+  document.getElementById('wn').onclick=()=>{stashMe();try{LS.removeItem('journey.me');LS.removeItem('journey.progress');}catch(e){}
     location.replace(location.pathname+(PREVIEW?'?preview&':'?')+'level='+n);};
   sc.scrollTop=0;
 }
 
 // ---- Level 2.5: the spiritual gifts survey, done at home between Level 2 and Level 3 ----
-const g25State=()=>!S.att[2]?'locked':giftsDone()?'done':'open';
+const g25State=()=>(!S.att[2]&&!REVIEW)?'locked':giftsDone()?'done':'open';
 function card25(){const st=g25State();
   return `<button class="card ${st==='done'?'done':(st==='open'?'':'locked')}" data-n="2.5" ${st==='locked'?'disabled':''}>
    <span class="ic"><svg viewBox="0 0 24 24">${st==='locked'?ICON.lock:ICON.gift}</svg></span>
@@ -322,7 +327,7 @@ function gifts25(keep){
 
 // ---- "Keep it on your phone": a tip to add The Journey to the home screen (hidden once added or dismissed) ----
 function a2hsTip(){
-  try{if(localStorage.getItem('journey.a2hs'))return '';}catch(e){}
+  try{if(LS.getItem('journey.a2hs'))return '';}catch(e){}
   if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true)return '';
   const ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),android=/Android/.test(ua);
   if(!ios&&!android)return '';
@@ -397,13 +402,13 @@ function home(){
   sc.querySelectorAll('.card[data-n]').forEach(b=>b.onclick=()=>{const n=+b.dataset.n;
     n===2.5?gifts25():n===0?(S.me?signup():welcome(0)):unlocked(n)?start(n):makeup(n);});
   const ax=document.getElementById('a2hsx');
-  if(ax)ax.onclick=()=>{try{localStorage.setItem('journey.a2hs','1');}catch(e){}const t=document.getElementById('a2hs');if(t)t.remove();};
+  if(ax)ax.onclick=()=>{try{LS.setItem('journey.a2hs','1');}catch(e){}const t=document.getElementById('a2hs');if(t)t.remove();};
   if(nx){const li=document.createElement('button');li.className='lilink';li.textContent='Switched phones? Enter a let-in code';li.onclick=()=>letin(Math.max(2,nx));sc.querySelector('.pad').appendChild(li);}
   if(S.me){sc.querySelector('.pad').insertAdjacentHTML('beforeend',
     `<div class="who">Signed in as <b>${esc(S.me.first)} ${esc(S.me.last)}</b><button id="notme">Not you?</button></div>`);
     document.getElementById('notme').onclick=()=>{   // someone else on this phone: start fresh
       stashMe();
-      try{localStorage.removeItem('journey.me');localStorage.removeItem('journey.progress');}catch(e){}location.reload();};}
+      try{LS.removeItem('journey.me');LS.removeItem('journey.progress');}catch(e){}location.reload();};}
 
   sc.querySelector('.pad').insertAdjacentHTML('beforeend','<p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:22px"><a href="../../about.html" style="color:inherit">The Journey &copy; ARISE Miami SDA Church &middot; used by permission</a></p>');
   sc.scrollTop=0;
@@ -738,13 +743,13 @@ function fbHTML(n,b){
   return `<div class="box" id="fb-${n}"><h3>Before you finish</h3><p>${b.q.length>1?'Two quick questions for the team.':'One quick question for the team.'}</p>
    ${b.q.map((q,i)=>`<div class="fbq">${esc(q)}</div>
      <textarea data-fq="${n}:${i}" placeholder="Your answer...">${esc(S.fb[n][i]||'')}</textarea>`).join('')}</div>`;}
-function missing(n){const bl=lv(n).blocks,out=[];
+function missing(n){const bl=lv(n).blocks,out=[];if(REVIEW)return out;
   const fb=bl.find(b=>b.t==='feedback');
   if(fb)fb.q.forEach((q,i)=>{if(!(S.fb[n][i]||'').trim())out.push('[data-fq="'+n+':'+i+'"]');});
   if(bl.some(b=>b.t==='aboutyou'))AB_REQ.forEach(k=>{if(!(S.about[k]||'').trim())out.push('[data-ab="'+k+'"]');});
   return out;}
 const ready=n=>lessonDone(n)&&!missing(n).length;
-function saveMe(){try{localStorage.setItem('journey.me',JSON.stringify(S.me));}catch(e){}}
+function saveMe(){try{LS.setItem('journey.me',JSON.stringify(S.me));}catch(e){}}
 function start(n){if(!S.me)return welcome(n);
   // Walk-in (or a different month than planned) on a first Sabbath: sign them up for today.
   if(n===1&&!S.att[1]&&satIndex(today())===1&&(!S.signup||S.signup.date!==ymd(today())))signMeUp(today());
@@ -859,7 +864,7 @@ function welcome(n){
 // ---- Send each finished level to Planning Center (via the journey-submit function) ----
 // Only ARISE Miami's own site sends to ARISE's Planning Center. A copy (fork) hosted anywhere
 // else sends nothing until its church points this at its own server.
-const SUBMIT_URL=location.hostname==='kendallturcios-sketch.github.io'?'https://eyplibippxytrlrrmafy.supabase.co/functions/v1/journey-submit':'';
+const SUBMIT_URL=!REVIEW&&location.hostname==='kendallturcios-sketch.github.io'?'https://eyplibippxytrlrrmafy.supabase.co/functions/v1/journey-submit':'';
 function levelAnswers(n){const a={fb:S.fb[n]||[]};
   if(n===1){a.about=S.about;a.baptism=S.baptism;}
   if(n===2)a.lgHelp=S.lgHelp;
@@ -867,8 +872,8 @@ function levelAnswers(n){const a={fb:S.fb[n]||[]};
   if(n===4){a.ministries=MIN.map((m,i)=>S.mins.has(m[0])||m[2].some(r=>S.roles.has(r))?i:-1).filter(i=>i>=0);
     a.unsure=S.mins.has('__unsure');a.roles=[...S.roles];a.signed=S.signed;}
   return a;}
-const outbox={get(){try{return JSON.parse(localStorage.getItem('journey.outbox')||'[]');}catch(e){return [];}},
-  set(q){try{localStorage.setItem('journey.outbox',JSON.stringify(q));}catch(e){}}};
+const outbox={get(){try{return JSON.parse(LS.getItem('journey.outbox')||'[]');}catch(e){return [];}},
+  set(q){try{LS.setItem('journey.outbox',JSON.stringify(q));}catch(e){}}};
 // Level 0 = the sign-up (answers = {start:'YYYY-MM'}).
 function sendLevel(n,ans){if(!SUBMIT_URL||!S.me)return;
   const q=outbox.get().filter(x=>x.level!==n);
@@ -925,12 +930,16 @@ function done(n){
   sc.scrollTop=0;
 }
 back.onclick=()=>['lesson','welcome','signup','makeup','gifts25','letin'].includes(S.view)?home():lesson(S.cur);
-try{const m=JSON.parse(localStorage.getItem('journey.me')||'null');if(m&&m.email)S.me=m;}catch(e){}
+try{const m=JSON.parse(LS.getItem('journey.me')||'null');if(m&&m.email)S.me=m;}catch(e){}
+if(REVIEW){S.me={first:'Review',last:'Mode',email:'review@example.invalid',phone:'3055550100',sms:false};
+  const rb=document.createElement('div');rb.textContent='Review mode: nothing is saved or sent';
+  rb.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99;background:#F0C674;color:#33290F;font:700 12px Archivo,Arial,sans-serif;text-align:center;padding:7px 8px';
+  document.body.appendChild(rb);}
 loadProg();
 home();
 // A facilitator's link (?level=N) opens that level directly. The parameter is removed from the address
 // right away, so a shortcut saved to the home screen doesn't keep jumping to the same level.
 (function(){const m=/[?&]level=([1-4])(?!\d)/.exec(location.search);if(!m)return;const n=+m[1];
   try{history.replaceState(null,'',location.pathname+location.search.replace(/([?&])level=[1-4]&?/,'$1').replace(/[?&]$/,'')+location.hash);}catch(e){}
-  S.me?whoIsThis(n):welcome(n);})();
+  REVIEW?route(n):S.me?whoIsThis(n):welcome(n);})();
 </script></body></html>
