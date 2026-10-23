@@ -257,6 +257,33 @@ function whyLocked(n){
   if(!prereq(n)) return n===3?(S.att[2]?'Finish Level 2.5 first: take the spiritual gifts survey and record your top three gifts.':'Complete Level 2, then Level 2.5 (your spiritual gifts), first.'):'Complete Level '+(n-1)+' first.';
   return 'Opens '+fmtDay(nextSession(n))+' at 9:00 AM. Doing a make-up session? Tap the card to enter the code.'; }
 
+// Several people can end up on one phone (a partner opens a texted link). Whoever signs out is stashed by
+// email and gets their progress back the next time they sign in with that email.
+function stashMe(){try{if(!S.me||!S.me.email)return;
+  const all=JSON.parse(localStorage.getItem('journey.people')||'{}');
+  all[S.me.email.toLowerCase()]={me:S.me,progress:JSON.parse(localStorage.getItem('journey.progress')||'{}')};
+  localStorage.setItem('journey.people',JSON.stringify(all));}catch(e){}}
+function restoreFor(email){try{const all=JSON.parse(localStorage.getItem('journey.people')||'{}'),k=(email||'').toLowerCase(),p=all[k];
+  if(!p)return;const pr=p.progress||{};S.att={1:false,2:false,3:false,4:false};(pr.done||[]).forEach(n=>S.att[n]=true);
+  S.gifts=pr.gifts||[];S.signup=pr.signup||null;S.makeup=pr.makeup||{};
+  delete all[k];localStorage.setItem('journey.people',JSON.stringify(all));saveProg();}catch(e){}}
+// Where a level link or card leads: the level if it's open, the make-up code screen if it will be, otherwise home.
+function route(n){S.att[n]?home():unlocked(n)?start(n):prereq(n)?makeup(n):home();}
+function whoIsThis(n){
+  S.view='who';S.cur=n;back.style.display='none';bt.textContent='The Journey';bs.textContent='';pg.style.width='0%';
+  sc.innerHTML=`<div class="fin"><h2>Is this you?</h2><div class="rule"></div>
+   <p>This phone is signed in as:</p>
+   <div class="note" style="text-align:left;margin-top:10px"><b>${esc(S.me.first)} ${esc(S.me.last)}</b><br>${esc(S.me.email)}</div>
+   <p style="margin-top:12px">Your level is recorded in ARISE Miami's records under this name.</p>
+   <button class="btn" id="wy">Yes, that's me &mdash; open Level ${n}</button>
+   <button class="btn ghost" id="wn">No, I'm someone else &mdash; fill in my name</button>
+   <p class="wnote">Best of all, open the link on your own phone. If you continue here as yourself, this phone's owner keeps their progress and gets it back when they sign in again.</p></div>`;
+  document.getElementById('wy').onclick=()=>route(n);
+  document.getElementById('wn').onclick=()=>{stashMe();try{localStorage.removeItem('journey.me');localStorage.removeItem('journey.progress');}catch(e){}
+    location.replace(location.pathname+(PREVIEW?'?preview&':'?')+'level='+n);};
+  sc.scrollTop=0;
+}
+
 // ---- Level 2.5: the spiritual gifts survey, done at home between Level 2 and Level 3 ----
 const g25State=()=>!S.att[2]?'locked':giftsDone()?'done':'open';
 function card25(){const st=g25State();
@@ -331,6 +358,7 @@ function home(){
   if(S.me){sc.querySelector('.pad').insertAdjacentHTML('beforeend',
     `<div class="who">Signed in as <b>${esc(S.me.first)} ${esc(S.me.last)}</b><button id="notme">Not you?</button></div>`);
     document.getElementById('notme').onclick=()=>{   // someone else on this phone: start fresh
+      stashMe();
       try{localStorage.removeItem('journey.me');localStorage.removeItem('journey.progress');}catch(e){}location.reload();};}
 
   sc.querySelector('.pad').insertAdjacentHTML('beforeend','<p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:22px"><a href="../../about.html" style="color:inherit">The Journey &copy; ARISE Miami SDA Church &middot; used by permission</a></p>');
@@ -778,7 +806,7 @@ function welcome(n){
     if(first){first.focus();return;}
     const ok=document.getElementById('smsok').checked;
     v.sms=ok;v.smsAt=ok?new Date().toISOString():null;   // optional SMS consent, with when it was given
-    S.me=v;saveMe();n?start(n):signup();};
+    restoreFor(v.email);S.me=v;saveMe();n?route(n):signup();};
   document.getElementById('wgo').onclick=go;
   ins.forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go();}}));
   sc.scrollTop=0;
@@ -856,4 +884,9 @@ back.onclick=()=>['lesson','welcome','signup','makeup','gifts25'].includes(S.vie
 try{const m=JSON.parse(localStorage.getItem('journey.me')||'null');if(m&&m.email)S.me=m;}catch(e){}
 loadProg();
 home();
+// A facilitator's link (?level=N) opens that level directly. The parameter is removed from the address
+// right away, so a shortcut saved to the home screen doesn't keep jumping to the same level.
+(function(){const m=/[?&]level=([1-4])(?!\d)/.exec(location.search);if(!m)return;const n=+m[1];
+  try{history.replaceState(null,'',location.pathname+location.search.replace(/([?&])level=[1-4]&?/,'$1').replace(/[?&]$/,'')+location.hash);}catch(e){}
+  S.me?whoIsThis(n):welcome(n);})();
 </script></body></html>
