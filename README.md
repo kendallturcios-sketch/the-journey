@@ -17,7 +17,7 @@ A four-level discipleship track, one Sabbath per level, taught monthly — twelv
 
 Participants follow along on their phones during the live session, filling in the
 worksheet as it's taught. Level 1 ends with a baptism invitation. Level 2 assigns
-the spiritual gifts survey. **Level 2.5** is done at home between Levels 2 and 3: they take the
+the spiritual gifts survey. A **Your Spiritual Gifts** step is done at home between Levels 2 and 3: they take the
 survey and record their top three gifts, and Level 3 stays locked until they do. Level 3 reviews their gifts and records their testimony.
 Level 4 is the covenant and choosing a ministry.
 
