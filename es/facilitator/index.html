@@ -98,7 +98,8 @@ header h1{font-family:var(--d);font-size:21px;font-weight:800;letter-spacing:-.0
 <header><div class="in">
   <div><div class="eye">Arise Miami &middot; Facilitador</div><h1 id="ttl">El Camino</h1></div>
   <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><div class="codebox" style="margin-left:0"><small id="ckl">Código de la sesión</small><b id="catt">----</b></div>
-  <div class="codebox" style="margin-left:0"><small>Código de reposición</small><b id="cmk">----</b></div></div>
+  <div class="codebox" style="margin-left:0"><small>Código de reposición</small><b id="cmk">----</b></div>
+  <div class="codebox" style="margin-left:0"><small>Código de acceso</small><b id="clk">----</b></div></div>
 </div></header>
 <div class="wrap"><div class="tabs" id="tabs"></div><div id="body"></div></div>
 <div class="bar">Copia del facilitador &mdash; con las respuestas. No es para los participantes. &middot; <a href="../../about.html">&copy; Iglesia Adventista ARISE Miami &middot; usado con permiso</a></div>
@@ -216,6 +217,7 @@ function draw(){
   const l=L[cur-1];
   document.getElementById('catt').textContent=dcode('att',l.n);
   document.getElementById('cmk').textContent=dcode('makeup',l.n);
+  document.getElementById('clk').textContent=dcode('letin',0);
   document.getElementById('ckl').textContent='Código · Nivel '+l.n;
   document.getElementById('ttl').textContent='Nivel '+l.n+' — '+l.title;
   const nb=l.blocks.filter(b=>b.t==='f').reduce((a,b)=>a+b.a.length,0);
@@ -225,7 +227,8 @@ function draw(){
     <div class="meta"><span>inicio <b>9:00 AM</b></span><span><b>90</b> minutos</span>
     ${nb?`<span><b>${nb}</b> espacios</span>`:''}
     <span>Código de la sesión <b>${dcode('att',l.n)}</b>${satIndex(new Date())===l.n?' (hoy)':' (solo funciona el '+esc(l.sab.toLowerCase())+')'}</span>
-    <span>Código de reposición <b>${dcode('makeup',l.n)}</b> (hoy, a cualquier hora)</span></div></div>
+    <span>Código de reposición <b>${dcode('makeup',l.n)}</b> (hoy, a cualquier hora)</span>
+    <span>Código de acceso <b>${dcode('letin',0)}</b> (hoy: para alguien con un teléfono nuevo, abre los niveles que ya hizo)</span></div></div>
    <div id="share"></div>
    ${l.blocks.map(block).join('')}`;
   renderShare(l);
