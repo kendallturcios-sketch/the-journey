@@ -254,7 +254,7 @@ const prereq=n=>n===1||(S.att[n-1]&&lessonDone(n-1)&&(n!==3||giftsDone()));
 const openToday=n=>PREVIEW||satIndex(today())===n||S.makeup[n]===ymd(today());
 function unlocked(n){return S.att[n]||(prereq(n)&&openToday(n));}
 function whyLocked(n){
-  if(!prereq(n)) return n===3?(S.att[2]?'Finish Level 2.5 first: take the spiritual gifts survey and record your top three gifts.':'Complete Level 2, then Level 2.5 (your spiritual gifts), first.'):'Complete Level '+(n-1)+' first.';
+  if(!prereq(n)) return n===3?(S.att[2]?'First, take the spiritual gifts survey and record your top three gifts.':'Complete Level 2 and the spiritual gifts survey first.'):'Complete Level '+(n-1)+' first.';
   return 'Opens '+fmtDay(nextSession(n))+' at 9:00 AM. Doing a make-up session? Tap the card to enter the code.'; }
 
 // Several people can end up on one phone (a partner opens a texted link). Whoever signs out is stashed by
@@ -289,16 +289,16 @@ const g25State=()=>!S.att[2]?'locked':giftsDone()?'done':'open';
 function card25(){const st=g25State();
   return `<button class="card ${st==='done'?'done':(st==='open'?'':'locked')}" data-n="2.5" ${st==='locked'?'disabled':''}>
    <span class="ic"><svg viewBox="0 0 24 24">${st==='locked'?ICON.lock:ICON.gift}</svg></span>
-   <span class="me"><span class="lv">Level 2.5</span><span class="tt">Your Spiritual Gifts</span>
+   <span class="me"><span class="tt">Your Spiritual Gifts</span>
    <span class="su">Take the survey at home and record your top three gifts</span>
    <span class="dy">${st==='done'?'&#10003; Completed':st==='open'?'Do this at home &middot; before Level 3':'Opens after Level 2'}</span></span>
    <span class="cv">${st==='locked'?'':'&#8250;'}</span></button>`;}
 function gifts25(keep){
   const y=keep?sc.scrollTop:0;
   S.view='gifts25';S.cur=2;back.style.display='block';
-  bt.textContent='Level 2.5';bs.textContent='Your Spiritual Gifts';
+  bt.textContent='Your Spiritual Gifts';bs.textContent='';
   pg.style.width=(giftsDone()?100:S.gifts.length/3*100)+'%';
-  sc.innerHTML=`<div class="lh"><div class="lv">Level 2.5 &middot; At home</div>
+  sc.innerHTML=`<div class="lh"><div class="lv">At home</div>
    <h2>Your Spiritual Gifts</h2><p>Take the survey on your own time, then record your top three results here. Level 3 opens once this is done.</p></div>
    <div class="pad"><div class="box hi"><h3>Take the survey</h3>
     <p>The Spiritual Gifts Assessment takes about 25 minutes. Find a quiet moment, and come back to this screen when you are done.</p>
@@ -332,7 +332,7 @@ function home(){
   const nd=!nx?null:unlocked(nx)?today():(nx===1&&su)?su:prereq(nx)?nextSession(nx):null;
   const banner=!nx?`<b>The Journey complete</b><span>Thank you for walking all four levels.</span>`
     :(nx===1&&!S.signup)?`<b>Start here &middot; sign up for The Journey</b><span>Pick the month you'll begin. It takes a minute.</span>`
-    :(nx===3&&g25State()==='open')?`<b>Level 2.5 &middot; at home</b><span>Take the gifts survey and record your top three.</span>`
+    :(nx===3&&g25State()==='open')?`<b>Your spiritual gifts &middot; at home</b><span>Take the gifts survey and record your top three.</span>`
     :nd?`<b>Level ${nx} &middot; ${esc(fmtWhen(nd))}</b><span>9:00 AM &middot; ${PLACE}</span>`
     :`<b>Level ${nx}</b><span>${esc(whyLocked(nx))}</span>`;
   // Level 0: sign up for a start date (hidden once Level 1 is done).
@@ -393,11 +393,11 @@ function render(n,b,i){
   if(b.t==='homework') return `<div class="box hi"><h3>Your homework before Level 3</h3>
     <p>Complete the Spiritual Gifts Assessment online. It takes about 25 minutes, and you cannot come to Level 3 without it.</p>
     <button class="btn teal" id="hw">Open the survey</button>
-    <p style="margin-top:12px;font-size:12.5px">Finish Level 2 first. Then tap <b>Level 2.5</b> on the main screen to record your top three gifts. You can do it at home, any time before Level 3.</p></div>`;
+    <p style="margin-top:12px;font-size:12.5px">Finish Level 2 first. Then tap <b>Your Spiritual Gifts</b> on the main screen to record your top three gifts. You can do it at home, any time before Level 3.</p></div>`;
   if(b.t==='mygifts'){
-    if(S.gifts.length!==3) return `<div class="note">Your survey results aren't recorded yet. Open Level 2.5 on the main screen to add them.</div>`;
+    if(S.gifts.length!==3) return `<div class="note">Your survey results aren't recorded yet. Open Your Spiritual Gifts on the main screen to add them.</div>`;
     return `<div class="box hi"><h3>Your top three gifts</h3>
-      <p style="margin-bottom:11px">Recorded in Level 2.5, from your survey.</p>
+      <p style="margin-bottom:11px">Recorded from your survey.</p>
       ${S.gifts.map((g,i)=>{const G=GIFTS.find(x=>x[0]===g);
         return `<div class="gitem"><div class="r">Number ${i+1}</div>
         <b>${esc(G[1])}</b><p>${esc(G[2])}</p>
@@ -873,8 +873,8 @@ function done(n){
        <b>${esc(picks.join(', '))}</b> — the leader has been notified and will reach out within three days.</div>`:''}
      <p style="margin-top:14px">Your journey is just beginning. Live in purpose and power.</p>`
     :`<p><b style="color:#0B2340">Next: ${esc(nxt)}</b></p>`}
-   ${n===2?`<div class="note" style="text-align:left;margin-top:13px"><b>Before Level 3:</b> take the spiritual gifts survey at home and record your top three gifts. You'll find it on the main screen as <b>Level 2.5</b>.</div>
-     <button class="btn teal" id="g25go">Do Level 2.5 now</button>`:''}
+   ${n===2?`<div class="note" style="text-align:left;margin-top:13px"><b>Before Level 3:</b> take the spiritual gifts survey at home and record your top three gifts. You'll find it on the main screen as <b>Your Spiritual Gifts</b>.</div>
+     <button class="btn teal" id="g25go">Record my gifts now</button>`:''}
    <button class="btn ${n===2?'ghost':''}" id="hm">Back to The Journey</button></div>`;
   document.getElementById('hm').onclick=home;
   const g25go=document.getElementById('g25go');if(g25go)g25go.onclick=()=>gifts25();
