@@ -98,7 +98,8 @@ header h1{font-family:var(--d);font-size:21px;font-weight:800;letter-spacing:-.0
 <header><div class="in">
   <div><div class="eye">Arise Miami &middot; Facilitator</div><h1 id="ttl">The Journey</h1></div>
   <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><div class="codebox" style="margin-left:0"><small id="ckl">Session code</small><b id="catt">----</b></div>
-  <div class="codebox" style="margin-left:0"><small>Make-up code</small><b id="cmk">----</b></div></div>
+  <div class="codebox" style="margin-left:0"><small>Make-up code</small><b id="cmk">----</b></div>
+  <div class="codebox" style="margin-left:0"><small>Let-in code</small><b id="clk">----</b></div></div>
 </div></header>
 <div class="wrap"><div class="tabs" id="tabs"></div><div id="body"></div></div>
 <div class="bar">Facilitator copy &mdash; answers shown. Not for participants. &middot; <a href="../../about.html">&copy; ARISE Miami SDA Church &middot; used by permission</a></div>
@@ -216,6 +217,7 @@ function draw(){
   const l=L[cur-1];
   document.getElementById('catt').textContent=dcode('att',l.n);
   document.getElementById('cmk').textContent=dcode('makeup',l.n);
+  document.getElementById('clk').textContent=dcode('letin',0);
   document.getElementById('ckl').textContent='Level '+l.n+' session code';
   document.getElementById('ttl').textContent='Level '+l.n+' — '+l.title;
   const nb=l.blocks.filter(b=>b.t==='f').reduce((a,b)=>a+b.a.length,0);
@@ -225,7 +227,8 @@ function draw(){
     <div class="meta"><span><b>9:00 AM</b> start</span><span><b>90</b> minutes</span>
     ${nb?`<span><b>${nb}</b> blanks</span>`:''}
     <span>Session code <b>${dcode('att',l.n)}</b>${satIndex(new Date())===l.n?' (today)':' (works only on the '+esc(l.sab)+')'}</span>
-    <span>Make-up code <b>${dcode('makeup',l.n)}</b> (today, any time)</span></div></div>
+    <span>Make-up code <b>${dcode('makeup',l.n)}</b> (today, any time)</span>
+    <span>Let-in code <b>${dcode('letin',0)}</b> (today: for someone on a new phone, opens the levels they already did)</span></div></div>
    <div id="share"></div>
    ${l.blocks.map(block).join('')}`;
   renderShare(l);
