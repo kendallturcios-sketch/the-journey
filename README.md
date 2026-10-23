@@ -87,6 +87,17 @@ at midnight, and it never skips the day's schedule.
 On iPhone and Android the home screen shows a short "add to your home screen" tip, once, until dismissed
 or until the app is opened from the home screen.
 
+### Reminder texts for every level
+
+Participants who ticked the optional text-message box get a text before each session: **Level 1** for people
+who signed up for that month, and **Levels 2, 3 and 4** for people who finished the level before. Each person
+gets at most two texts per session: the Wednesday before ("this Saturday") and the Friday ("tomorrow"), with the
+date, 9:00 AM, the room and a link that opens the level. A fifth Saturday is skipped, and people who haven't
+done anything in 70 days stop getting them. They are **off by default**: set the `LEVEL_REMINDERS` secret to
+`test` (texts the owner only) and then `live`. Run the "Journey daily check" workflow by hand to try it.
+Only people who sign up or finish a level from now on are included (their text consent is saved with them);
+earlier sign-ups have to open the app and finish a step once. Replying STOP stops them.
+
 ### Spiritual gifts: staff board and reminder texts
 
 When someone saves their top three gifts, the app tells the server (table `journey_people`, see
