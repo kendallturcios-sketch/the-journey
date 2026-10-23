@@ -93,8 +93,8 @@ When someone saves their top three gifts, the app tells the server (table `journ
 `db/019_journey_people.sql`; only the server can read it). Their gifts still go to Planning Center with the
 Level 3 form. The staff board lists everyone who finished Level 2 but hasn't saved their gifts.
 Reminder texts are **off by default**. Set the `GIFT_REMINDERS` secret to `test` (texts the owner only) and
-then `live` (texts people who ticked the optional text-message box, at most twice each, 3 days after
-Level 2 and 4 days later). Replying STOP stops them.
+then `live` (texts people who ticked the optional text-message box, at most twice each: the Tuesday and
+Thursday before their Level 3, and nothing on or after Level 3 day). Replying STOP stops them.
 
 ## How ARISE Miami runs it
 
