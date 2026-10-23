@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>The Journey</title>
+<style>body{font-family:system-ui,sans-serif;background:#F7F9FA;color:#0B2340;text-align:center;padding:48px 20px}
+a{display:block;max-width:320px;margin:14px auto;padding:15px;border-radius:12px;background:#0B2340;color:#fff;text-decoration:none;font-weight:700}
+a.es{background:#12A5B8;color:#04252A}</style>
+<script>
+// A short address for The Journey: /go/ opens the app in the visitor's language.
+// /go/?level=3 opens a level (the app asks who it is first); /go/?lang=es forces Spanish.
+(function(){
+  var q=location.search,m=/[?&]lang=(en|es)(?![a-z])/.exec(q),
+      l=m?m[1]:((navigator.language||'en').toLowerCase().indexOf('es')===0?'es':'en'),
+      v=/[?&]level=([1-4])(?!\d)/.exec(q);
+  location.replace('../'+l+'/participant/'+(v?'?level='+v[1]:''));
+})();
+</script></head>
+<body><h1>The Journey</h1><p>Opening&hellip; / Abriendo&hellip;</p>
+<a href="../en/participant/">Open in English</a><a class="es" href="../es/participant/">Abrir en español</a></body></html>
