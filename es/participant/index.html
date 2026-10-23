@@ -255,7 +255,7 @@ const prereq=n=>n===1||(S.att[n-1]&&lessonDone(n-1)&&(n!==3||giftsDone()));
 const openToday=n=>PREVIEW||satIndex(today())===n||S.makeup[n]===ymd(today());
 function unlocked(n){return S.att[n]||(prereq(n)&&openToday(n));}
 function whyLocked(n){
-  if(!prereq(n)) return n===3?(S.att[2]?'Primero termina el Nivel 2.5: haz la evaluación de dones espirituales y registra tus tres dones principales.':'Primero completa el Nivel 2 y luego el Nivel 2.5 (tus dones espirituales).'):'Primero completa el Nivel '+(n-1)+'.';
+  if(!prereq(n)) return n===3?(S.att[2]?'Primero haz la evaluación de dones espirituales y registra tus tres dones principales.':'Primero completa el Nivel 2 y la evaluación de dones espirituales.'):'Primero completa el Nivel '+(n-1)+'.';
   return 'Abre el '+fmtDay(nextSession(n))+' a las 9:00 AM. ¿Tienes una sesión de reposición? Toca la tarjeta para ingresar el código.'; }
 
 // Several people can end up on one phone (a partner opens a texted link). Whoever signs out is stashed by
@@ -290,16 +290,16 @@ const g25State=()=>!S.att[2]?'locked':giftsDone()?'done':'open';
 function card25(){const st=g25State();
   return `<button class="card ${st==='done'?'done':(st==='open'?'':'locked')}" data-n="2.5" ${st==='locked'?'disabled':''}>
    <span class="ic"><svg viewBox="0 0 24 24">${st==='locked'?ICON.lock:ICON.gift}</svg></span>
-   <span class="me"><span class="lv">Nivel 2.5</span><span class="tt">Tus dones espirituales</span>
+   <span class="me"><span class="tt">Tus dones espirituales</span>
    <span class="su">Haz la evaluación en casa y registra tus tres dones principales</span>
    <span class="dy">${st==='done'?'&#10003; Completado':st==='open'?'Para hacer en casa &middot; antes del Nivel 3':'Se abre después del Nivel 2'}</span></span>
    <span class="cv">${st==='locked'?'':'&#8250;'}</span></button>`;}
 function gifts25(keep){
   const y=keep?sc.scrollTop:0;
   S.view='gifts25';S.cur=2;back.style.display='block';
-  bt.textContent='Nivel 2.5';bs.textContent='Tus dones espirituales';
+  bt.textContent='Tus dones espirituales';bs.textContent='';
   pg.style.width=(giftsDone()?100:S.gifts.length/3*100)+'%';
-  sc.innerHTML=`<div class="lh"><div class="lv">Nivel 2.5 &middot; En casa</div>
+  sc.innerHTML=`<div class="lh"><div class="lv">En casa</div>
    <h2>Tus dones espirituales</h2><p>Haz la evaluación a tu ritmo y luego registra aquí tus tres primeros resultados. El Nivel 3 se abre cuando termines esto.</p></div>
    <div class="pad"><div class="box hi"><h3>Haz la evaluación</h3>
     <p>La evaluación de dones espirituales toma unos 25 minutos. Busca un momento tranquilo y vuelve a esta pantalla cuando termines.</p>
@@ -333,7 +333,7 @@ function home(){
   const nd=!nx?null:unlocked(nx)?today():(nx===1&&su)?su:prereq(nx)?nextSession(nx):null;
   const banner=!nx?`<b>El Camino completado</b><span>Gracias por recorrer los cuatro niveles.</span>`
     :(nx===1&&!S.signup)?`<b>Empieza aquí &middot; inscríbete en El Camino</b><span>Elige el mes en que comenzarás. Toma un minuto.</span>`
-    :(nx===3&&g25State()==='open')?`<b>Nivel 2.5 &middot; en casa</b><span>Haz la evaluación de dones y registra tus tres principales.</span>`
+    :(nx===3&&g25State()==='open')?`<b>Tus dones espirituales &middot; en casa</b><span>Haz la evaluación de dones y registra tus tres principales.</span>`
     :nd?`<b>Nivel ${nx} &middot; ${esc(cap(fmtWhen(nd)))}</b><span>9:00 AM &middot; ${PLACE}</span>`
     :`<b>Nivel ${nx}</b><span>${esc(whyLocked(nx))}</span>`;
   // Nivel 0: inscribirse con una fecha de inicio (se oculta al completar el Nivel 1).
@@ -394,11 +394,11 @@ function render(n,b,i){
   if(b.t==='homework') return `<div class="box hi"><h3>Tu tarea antes del Nivel 3</h3>
     <p>Completa en línea la evaluación de dones espirituales. Toma unos 25 minutos, y no puedes venir al Nivel 3 sin ella.</p>
     <button class="btn teal" id="hw">Abrir la evaluación</button>
-    <p style="margin-top:12px;font-size:12.5px">Primero termina el Nivel 2. Luego toca <b>Nivel 2.5</b> en la pantalla principal para registrar tus tres dones principales. Puedes hacerlo en casa, en cualquier momento antes del Nivel 3.</p></div>`;
+    <p style="margin-top:12px;font-size:12.5px">Primero termina el Nivel 2. Luego toca <b>Tus dones espirituales</b> en la pantalla principal para registrar tus tres dones principales. Puedes hacerlo en casa, en cualquier momento antes del Nivel 3.</p></div>`;
   if(b.t==='mygifts'){
-    if(S.gifts.length!==3) return `<div class="note">Aún no has registrado los resultados de tu evaluación. Abre el Nivel 2.5 en la pantalla principal para añadirlos.</div>`;
+    if(S.gifts.length!==3) return `<div class="note">Aún no has registrado los resultados de tu evaluación. Abre Tus dones espirituales en la pantalla principal para añadirlos.</div>`;
     return `<div class="box hi"><h3>Tus tres dones principales</h3>
-      <p style="margin-bottom:11px">Registrados en el Nivel 2.5, desde tu evaluación.</p>
+      <p style="margin-bottom:11px">Registrados desde tu evaluación.</p>
       ${S.gifts.map((g,i)=>{const G=GIFTS.find(x=>x[0]===g);
         return `<div class="gitem"><div class="r">Número ${i+1}</div>
         <b>${esc(G[1])}</b><p>${esc(G[2])}</p>
@@ -874,8 +874,8 @@ function done(n){
        <b>${esc(picks.join(', '))}</b> — se le ha notificado al líder y se comunicará contigo dentro de tres días.</div>`:''}
      <p style="margin-top:14px">Tu camino apenas comienza. Vive con propósito y con poder.</p>`
     :`<p><b style="color:#0B2340">Siguiente: ${esc(nxt)}</b></p>`}
-   ${n===2?`<div class="note" style="text-align:left;margin-top:13px"><b>Antes del Nivel 3:</b> haz en casa la evaluación de dones espirituales y registra tus tres dones principales. La encontrarás en la pantalla principal como <b>Nivel 2.5</b>.</div>
-     <button class="btn teal" id="g25go">Hacer el Nivel 2.5 ahora</button>`:''}
+   ${n===2?`<div class="note" style="text-align:left;margin-top:13px"><b>Antes del Nivel 3:</b> haz en casa la evaluación de dones espirituales y registra tus tres dones principales. La encontrarás en la pantalla principal como <b>Tus dones espirituales</b>.</div>
+     <button class="btn teal" id="g25go">Registrar mis dones ahora</button>`:''}
    <button class="btn ${n===2?'ghost':''}" id="hm">Volver a El Camino</button></div>`;
   document.getElementById('hm').onclick=home;
   const g25go=document.getElementById('g25go');if(g25go)g25go.onclick=()=>gifts25();
