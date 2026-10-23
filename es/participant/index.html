@@ -175,6 +175,13 @@ textarea:focus{border-color:var(--teal)}
 .priv svg{flex:0 0 auto}
 .fbq{font-family:var(--d);font-size:14.5px;font-weight:700;line-height:1.35;margin:15px 0 7px}
 .wnote{text-align:center;font-size:12px;color:var(--muted);margin-top:11px}
+.tip{background:#EAF6FA;border:1px solid #BFE0EA;border-radius:14px;padding:13px 15px;margin-bottom:14px;text-align:left}
+.tip>b{font-family:var(--d);font-size:14px}.tip p{font-size:13px;color:#2B5560;line-height:1.5;margin-top:5px}.tip .tn{font-size:12px;color:var(--muted)}
+.tip button{margin-top:9px;padding:7px 14px;border:0;border-radius:9px;background:var(--teal);color:#04252A;font-family:var(--d);font-weight:700;font-size:12.5px;cursor:pointer}
+.lilink{display:block;margin:18px auto 0;background:none;border:0;color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer;font-family:var(--b)}
+.lvs{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.lvs button{padding:9px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-family:var(--d);font-weight:700;font-size:13px;color:var(--muted);cursor:pointer}
+.lvs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .smsopt{display:flex;gap:10px;align-items:flex-start;text-align:left;font-size:12.5px;line-height:1.45;color:var(--muted);margin:14px 2px 4px;cursor:pointer}
 .smsopt input{flex:none;width:19px;height:19px;margin-top:1px;accent-color:var(--teal)}
 .smsopt a{color:var(--teal);font-weight:600}
@@ -269,7 +276,7 @@ function restoreFor(email){try{const all=JSON.parse(localStorage.getItem('journe
   S.gifts=pr.gifts||[];S.signup=pr.signup||null;S.makeup=pr.makeup||{};
   delete all[k];localStorage.setItem('journey.people',JSON.stringify(all));saveProg();}catch(e){}}
 // Where a level link or card leads: the level if it's open, the make-up code screen if it will be, otherwise home.
-function route(n){S.att[n]?home():unlocked(n)?start(n):prereq(n)?makeup(n):home();}
+function route(n){S.att[n]?home():unlocked(n)?start(n):prereq(n)?makeup(n):(n>=2&&!S.att[n-1])?letin(n):home();}
 function whoIsThis(n){
   S.view='who';S.cur=n;back.style.display='none';bt.textContent='El Camino';bs.textContent='';pg.style.width='0%';
   sc.innerHTML=`<div class="fin"><h2>&iquest;Eres t&uacute;?</h2><div class="rule"></div>
@@ -309,10 +316,44 @@ function gifts25(keep){
   document.getElementById('hw').onclick=()=>window.open('https://gifts.churchgrowth.org/spiritual-gifts-survey','_blank');
   sc.querySelectorAll('[data-g]').forEach(c=>c.onclick=()=>{const g=c.dataset.g,i=S.gifts.indexOf(g);
     if(i>=0)S.gifts.splice(i,1);else if(S.gifts.length<3)S.gifts.push(g);
-    saveProg();gifts25(true);});
+    saveProg();if(S.gifts.length===3)sendGifts();gifts25(true);});
   document.getElementById('g25done').onclick=home;
   sc.scrollTop=y;
 }
+
+// ---- "Keep it on your phone": a tip to add The Journey to the home screen (hidden once added or dismissed) ----
+function a2hsTip(){
+  try{if(localStorage.getItem('journey.a2hs'))return '';}catch(e){}
+  if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true)return '';
+  const ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),android=/Android/.test(ua);
+  if(!ios&&!android)return '';
+  return `<div class="tip" id="a2hs"><b>Ten El Camino en tu teléfono</b>
+   <p>${ios?'Toca <b>Compartir</b> y luego <b>Añadir a pantalla de inicio</b>.':'Toca el menú <b>&#8942;</b> y luego <b>Añadir a la pantalla de inicio</b>.'}</p>
+   <p class="tn">¿Abriste esto desde un mensaje u otra app? Ábrelo primero en ${ios?'Safari':'Chrome'}.</p>
+   <button id="a2hsx">Entendido</button></div>`;
+}
+// ---- Switched phones: a facilitator's let-in code marks earlier levels as done on THIS phone (nothing is sent) ----
+function letin(n0){
+  let n=n0>=2&&n0<=4?n0:(satIndex(today())>=2&&satIndex(today())<=4?satIndex(today()):3);
+  S.view='letin';S.cur=n;back.style.display='block';bt.textContent='El Camino';bs.textContent='';pg.style.width='0%';
+  sc.innerHTML=`<div class="fin"><h2>¿Cambiaste de teléfono?</h2><div class="rule"></div>
+   <p>Si terminaste niveles anteriores en otro teléfono, pide a tu facilitador el código de acceso de hoy. Marca tus niveles anteriores como hechos solo en este teléfono. No se envía nada a ARISE.</p>
+   <p style="margin-top:14px;font-weight:600;color:var(--ink)">Me uno al:</p>
+   <div class="lvs">${[2,3,4].map(k=>`<button data-lv="${k}" class="${k===n?'on':''}">Nivel ${k}</button>`).join('')}</div>
+   <div class="codebox">${[0,1,2,3].map(i=>`<input class="digit" inputmode="numeric" maxlength="1" aria-label="Digit ${i+1}">`).join('')}</div>
+   <div class="cn" id="cn">Tu facilitador tiene el código de acceso de hoy.</div>
+   <button class="btn" id="go">Dejarme entrar</button>
+   <button class="btn ghost" id="bk">Volver a El Camino</button></div>`;
+  sc.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>letin(+b.dataset.lv));
+  digits(c=>{if(c!==dcode('letin',0))return "Ese no es el código de acceso de hoy.";
+    for(let k=1;k<n;k++)S.att[k]=true;saveProg();route(n);return true;});
+  document.getElementById('bk').onclick=home;
+  sc.scrollTop=0;
+}
+function sendGifts(){if(!SUBMIT_URL||!S.me)return;
+  const q=outbox.get().filter(x=>x.level!==25);
+  q.push({level:25,body:{action:'gifts',lang:document.documentElement.lang,me:S.me,answers:{gifts:S.gifts}}});
+  outbox.set(q);flush();}
 
 function home(){
   S.view='home';back.style.display='none';bt.textContent='El Camino';bs.textContent='Arise Miami';
@@ -352,10 +393,13 @@ function home(){
    <div class="in"><div class="eye">Arise Miami</div><h2>El<br>Camino</h2>
    <p>Cuatro pasos para descubrir tu propósito, entender tus dones y unirte a nosotros en la misión.</p></div></div>
    <div class="next"><span class="dot"></span><span>${banner}</span></div>
-   <div class="pad">${card0?`<div class="st">Antes de comenzar</div>${card0}`:''}<div class="st">Tus cuatro niveles</div>${cards}
+   <div class="pad">${a2hsTip()}${card0?`<div class="st">Antes de comenzar</div>${card0}`:''}<div class="st">Tus cuatro niveles</div>${cards}
    ${lk.length?`<div class="note"><b>Nivel ${lk[0].n}</b> — ${esc(whyLocked(lk[0].n))}</div>`:''}</div>`;
   sc.querySelectorAll('.card[data-n]').forEach(b=>b.onclick=()=>{const n=+b.dataset.n;
     n===2.5?gifts25():n===0?(S.me?signup():welcome(0)):unlocked(n)?start(n):makeup(n);});
+  const ax=document.getElementById('a2hsx');
+  if(ax)ax.onclick=()=>{try{localStorage.setItem('journey.a2hs','1');}catch(e){}const t=document.getElementById('a2hs');if(t)t.remove();};
+  if(nx){const li=document.createElement('button');li.className='lilink';li.textContent='¿Cambiaste de teléfono? Ingresa un código de acceso';li.onclick=()=>letin(Math.max(2,nx));sc.querySelector('.pad').appendChild(li);}
   if(S.me){sc.querySelector('.pad').insertAdjacentHTML('beforeend',
     `<div class="who">Conectado como <b>${esc(S.me.first)} ${esc(S.me.last)}</b><button id="notme">¿No eres tú?</button></div>`);
     document.getElementById('notme').onclick=()=>{   // otra persona en este teléfono: empezar de cero
@@ -881,7 +925,7 @@ function done(n){
   const g25go=document.getElementById('g25go');if(g25go)g25go.onclick=()=>gifts25();
   sc.scrollTop=0;
 }
-back.onclick=()=>['lesson','welcome','signup','makeup','gifts25'].includes(S.view)?home():lesson(S.cur);
+back.onclick=()=>['lesson','welcome','signup','makeup','gifts25','letin'].includes(S.view)?home():lesson(S.cur);
 try{const m=JSON.parse(localStorage.getItem('journey.me')||'null');if(m&&m.email)S.me=m;}catch(e){}
 loadProg();
 home();
