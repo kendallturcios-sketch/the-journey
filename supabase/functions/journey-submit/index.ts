@@ -12,6 +12,7 @@
 //   { action: "submit",  level, lang, me, answers }  → creates the form submission
 //   { action: "preview", level, lang, me, answers }  → builds it but does NOT send (for testing)
 //   { action: "inspect", level }                     → lists the form's fields, types and options
+//   { action: "gifts", lang, me, answers:{gifts} }  → notes that this person saved their top three gifts
 
 const PCO = "https://api.planningcenteronline.com/people/v2";
 
@@ -44,7 +45,7 @@ const UNSURE_LABEL = "not sure";
 const BAPTISM_LABEL: Record<string, string> = { yes: "yes", talk: "i have questions", not: "not yet", already: "i've already been baptized" };
 const LIFEGROUP_HELP_LABEL = "help finding";
 
-type Me = { first: string; last: string; email: string; phone: string };
+type Me = { first: string; last: string; email: string; phone: string; sms?: boolean; smsAt?: string };
 type Answers = {
   fb?: string[];                    // feedback answers, in form order
   about?: Record<string, string>;   // Level 1: bday, gender, marital, street, apt, city, state, zip, country, found
@@ -243,10 +244,47 @@ async function build(level: number, me: Me, a: Answers) {
   };
 }
 
-// ---------- request checks ---------------------------------------------
+// ---------- the app's own small database: who finished Level 2, their gifts, and text consent ----------
+// Table journey_people (db/019_journey_people.sql). Row-level security is on with no public policies,
+// so only this server (the service key) can read or write it. Used for the staff board's "waiting on
+// the spiritual gifts survey" list and for the optional gift-survey reminder texts.
+async function db(path: string, init: RequestInit = {}) {
+  const url = Deno.env.get("SUPABASE_URL"), key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) throw new Problem("Database key is not available.");
+  const r = await fetch(`${url}/rest/v1/${path}`, {
+    ...init,
+    headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", ...(init.headers || {}) },
+  });
+  const t = await r.text();
+  if (!r.ok) throw new Problem(`Database ${r.status}: ${t.slice(0, 300)}`);
+  return t ? JSON.parse(t) : [];
+}
+// Create or update this person's row (matched on lower-cased email). Only the fields given are changed.
+async function remember(me: Me, lang: string, extra: Record<string, unknown>) {
+  const row: Record<string, unknown> = {
+    email: me.email.trim().toLowerCase(), first_name: me.first, last_name: me.last, phone: me.phone,
+    lang: lang === "es" ? "es" : "en", updated_at: new Date().toISOString(), ...extra,
+  };
+  if (typeof me.sms === "boolean") row.sms_ok = me.sms;                       // the optional text-message checkbox
+  if (me.sms === true) row.sms_at = me.smsAt || new Date().toISOString();
+  await db("journey_people?on_conflict=email", {
+    method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(row),
+  });
+}
+// What finishing a level changes in the row.
+function stamp(level: number, a: Answers): Record<string, unknown> {
+  const now = new Date().toISOString();
+  if (level === 2) return { level2_at: now };
+  if (level === 3) return { level3_at: now, ...((a.gifts || []).length === 3 ? { gifts: a.gifts, gifts_at: now } : {}) };
+  return {};
+}
+
+// ---------- request checks ----------
 function checkMe(me: any): Me {
   const s = (x: unknown, max = 200) => (typeof x === "string" ? x.trim().slice(0, max) : "");
-  const m = { first: s(me?.first, 80), last: s(me?.last, 80), email: s(me?.email, 200), phone: s(me?.phone, 40) };
+  const m: Me = { first: s(me?.first, 80), last: s(me?.last, 80), email: s(me?.email, 200), phone: s(me?.phone, 40) };
+  if (typeof me?.sms === "boolean") m.sms = me.sms;                      // optional text-message consent, as the app sends it
+  if (typeof me?.smsAt === "string" && !Number.isNaN(Date.parse(me.smsAt))) m.smsAt = new Date(me.smsAt).toISOString();
   if (!m.first || !m.last) throw new Problem("Missing name");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email)) throw new Problem("Invalid email");
   if (m.phone.replace(/\D/g, "").length < 10) throw new Problem("Invalid phone");
@@ -622,6 +660,63 @@ async function cardNudges(act: boolean, log: string[]) {
   }
 }
 
+// ---------- spiritual-gifts reminder texts (to participants who ticked the optional text box) ----------
+// GIFT_REMINDERS secret: "off" (default) | "test" | "live".
+//   test: texts go to the owner only (marked [TEST → name]), at most 3 per run, nothing is counted as sent.
+//   live: texts go to the participant; at most 2 per person (3 days after Level 2, then 4 days later).
+// Only people who finished Level 2 within 21 days, haven't saved their gifts, and opted in are texted.
+const APP_LINK = (lang: string) => `https://kendallturcios-sketch.github.io/the-journey/${lang === "es" ? "es" : "en"}/participant/`;
+function e164(p: string): string {
+  const d = (p || "").replace(/\D/g, "");
+  if (d.length === 10) return "+1" + d;
+  if (d.length === 11 && d[0] === "1") return "+" + d;
+  return (p || "").trim().startsWith("+") && d.length >= 11 ? "+" + d : "";
+}
+function giftMsg(lang: string, level3: Date): string {
+  const when = (loc: string) => level3.toLocaleDateString(loc, { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+  return lang === "es"
+    ? `ARISE Miami: antes del Nivel 3 (${when("es-US")}, 9:00 AM), haz la evaluación de dones espirituales (unos 25 min) en gifts.churchgrowth.org/spiritual-gifts-survey. Luego toca Tus dones espirituales en El Camino para guardar tus 3 principales: ${APP_LINK("es")} Responde STOP para cancelar.`
+    : `ARISE Miami: before Level 3 (${when("en-US")}, 9:00 AM), take the spiritual gifts survey (about 25 min) at gifts.churchgrowth.org/spiritual-gifts-survey. Then tap Your Spiritual Gifts in The Journey to save your top 3: ${APP_LINK("en")} Reply STOP to opt out.`;
+}
+async function giftReminders(body: any, log: string[]) {
+  const mode = (Deno.env.get("GIFT_REMINDERS") || "off").trim().toLowerCase();
+  if (mode !== "test" && mode !== "live") return;
+  const dry = !!body.dry;
+  const rows: any[] = await db("journey_people?select=*&level2_at=not.is.null&level3_at=is.null&gifts=is.null&sms_ok=eq.true&remind_count=lt.2&order=level2_at.asc&limit=200");
+  const today = miamiDay(0), level3 = nextSession(3, today);
+  const owner = mode === "test" ? await contactById(await defaultAssignee()) : null;
+  let due = 0, sent = 0;
+  for (const r of rows) {
+    const age = daysSince(r.level2_at);
+    if (age > 21) continue;
+    const gap = r.reminded_at ? daysSince(r.reminded_at) : 99;
+    if (!(r.remind_count === 0 ? age >= 3 : gap >= 4)) continue;
+    if (mode === "test" && due >= 3) break;
+    due++;
+    if (dry) continue;
+    const to = owner ? owner.phone : e164(r.phone || "");
+    if (!to) { log.push("gift reminder: no usable number for one person"); continue; }
+    const msg = giftMsg(r.lang, level3);
+    const mark = (n: number, at: string | null) => db(`journey_people?email=eq.${encodeURIComponent(r.email)}`, {
+      method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ remind_count: n, reminded_at: at }),
+    });
+    try {
+      // Count it BEFORE texting: if the database write fails nobody gets texted twice; if the text fails we put the count back.
+      if (mode === "live") await mark((r.remind_count || 0) + 1, new Date().toISOString());
+      const res = await sendText(to, owner ? `[TEST → ${r.first_name} ${r.last_name}] ${msg}` : msg);
+      if (res.startsWith("sent")) { sent++; continue; }
+      log.push(`gift reminder failed: ${res}`);
+      if (mode === "live") {
+        // They replied STOP (Twilio refuses): stop trying. Anything else: put the count back so tomorrow retries.
+        if (/unsubscribed|blacklist|21610/i.test(res)) {
+          await db(`journey_people?email=eq.${encodeURIComponent(r.email)}`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ sms_ok: false }) });
+        } else await mark(r.remind_count || 0, r.reminded_at || null);
+      }
+    } catch (e) { log.push(`gift reminder error: ${(e as Error).message.slice(0, 120)}`); }
+  }
+  log.push(`gift reminders (${mode}${dry ? ", dry run" : ""}): ${due} due, ${sent} sent`);
+}
+
 async function daily(body: any) {
   const act = alertsMode() !== "off" && !body.dry;
   const D = /^\d{4}-\d{2}-\d{2}$/.test(body.date || "") ? new Date(body.date + "T00:00:00Z") : miamiDay(-1);
@@ -631,6 +726,7 @@ async function daily(body: any) {
   if (n >= 1 && n <= 4) await step("missed level", () => missedLevel(n, D, act, log));
   await step("life group requests", () => groupRequestAlerts(act, log));
   await step("card nudges", () => cardNudges(act, log));
+  await step("gift reminders", () => giftReminders(body, log));
   return { ok: true, log };
 }
 
@@ -661,7 +757,14 @@ async function board() {
     reqs.push({ ...r, personName: `${p.data.attributes.first_name} ${p.data.attributes.last_name}` });
   }
   const recent = (c: any) => !c.removed && (!c.completed || daysSince(c.completed) <= 30);
-  return { ok: true, at: new Date().toISOString(), mode: alertsMode(), cards: cards.filter(recent), requests: reqs, people };
+  let giftsWaiting: unknown[] = [];
+  try {
+    const rows: any[] = await db("journey_people?select=first_name,last_name,level2_at,sms_ok,remind_count&level2_at=not.is.null&level3_at=is.null&gifts=is.null&order=level2_at.asc&limit=100");
+    giftsWaiting = rows.filter((r) => daysSince(r.level2_at) <= 120).map((r) => ({
+      name: `${r.first_name} ${r.last_name}`, since: r.level2_at, days: daysSince(r.level2_at), texts: r.sms_ok ? r.remind_count : null,
+    }));
+  } catch (e) { console.error("board gifts:", e); }
+  return { ok: true, at: new Date().toISOString(), mode: alertsMode(), cards: cards.filter(recent), requests: reqs, people, giftsWaiting };
 }
 
 // A leader tapped "I reached out": complete that request's card(s).
@@ -822,6 +925,13 @@ Deno.serve(async (req) => {
     if (body.action === "done") {
       return new Response(JSON.stringify(await markDone(String(body.p || ""), String(body.c || ""), String(body.s || ""))), { headers: h });
     }
+    if (body.action === "gifts") {
+      // The app tells us when someone has saved their top three gifts (Planning Center still gets them with Level 3).
+      const gm = checkMe(body.me), ga = checkAnswers({ gifts: body.answers?.gifts }).gifts || [];
+      if (ga.length !== 3 || new Set(ga).size !== 3) throw new Problem("Pick three different gifts.");
+      await remember(gm, String(body.lang || "en"), { gifts: ga, gifts_at: new Date().toISOString() });
+      return new Response(JSON.stringify({ ok: true }), { headers: h });
+    }
     const level = Number(body.level);
     if (!FORMS[level]) throw new Problem("level must be 1-4");
 
@@ -859,7 +969,8 @@ Deno.serve(async (req) => {
 
     const res = await pco(`/forms/${FORMS[level]}/form_submissions`, { method: "POST", body: JSON.stringify(payload) });
     const person = res?.data?.relationships?.person?.data?.id ?? null;
-    // The submission is in; a failed alert must not make the app retry it.
+    // The submission is in; a failed alert (or database note) must not make the app retry it.
+    try { await remember(me, String(body.lang || "en"), { ...(person ? { pco_person: String(person) } : {}), ...stamp(level, answers) }); } catch (e) { console.error("remember:", e); }
     try { console.log(await alertLeaders(level, me, answers, person)); } catch (e) { console.error("alerts:", e); }
     return new Response(JSON.stringify({ ok: true, submission: res?.data?.id ?? null, person }), { headers: h });
   } catch (e) {
