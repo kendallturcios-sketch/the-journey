@@ -62,6 +62,14 @@ a copy button and a QR code that can be shown full screen on the projector. The 
 progress stays on each person's own phone. Copies of the app on other addresses get the link and
 buttons without the QR code (the QR codes are made for ARISE Miami's address).
 
+### Reviewing every level
+
+`/en/participant/?review` (Spanish: `/es/participant/?review`) is for staff walk-throughs. Every level and the
+gifts step open, nothing is required (the "About you" fields, feedback questions, name form), and the code
+`4827` finishes any level. Nothing is saved on the phone and nothing is sent to Planning Center or the server,
+so it can't create a test person or alert anyone, and a phone's real saved name and progress are left alone.
+`?preview` still opens every level on any day but sends real submissions.
+
 ### Short address
 
 `/go/` opens the app in the visitor's language, and `/go/?level=3` opens a level (the app still asks who they are
