@@ -53,6 +53,15 @@ ministries, schedule. No build step, no dependencies. Open the file in a browser
 Scripture is **Berean Standard Bible** (English) and **Reina-Valera 1909** (Spanish),
 both public domain — nothing to license, and it works with no internet connection.
 
+## Sending a level to phones
+
+In the facilitator app, every level has a **Send Level N to phones** card with a link, a **Text it**
+button (opens the facilitator's own messaging app, nothing is sent from a server), a share sheet,
+a copy button and a QR code that can be shown full screen on the projector. The link looks like
+`/en/participant/?level=3` and opens that level on the participant's phone. It carries no identity:
+progress stays on each person's own phone. Copies of the app on other addresses get the link and
+buttons without the QR code (the QR codes are made for ARISE Miami's address).
+
 ## How ARISE Miami runs it
 
 The apps send each finished level to Planning Center through a small Supabase Edge
