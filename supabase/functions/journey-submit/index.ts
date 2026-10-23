@@ -13,6 +13,7 @@
 //   { action: "preview", level, lang, me, answers }  → builds it but does NOT send (for testing)
 //   { action: "inspect", level }                     → lists the form's fields, types and options
 //   { action: "gifts", lang, me, answers:{gifts} }  → notes that this person saved their top three gifts
+//   (every submit also notes who finished which level, for the session reminder texts: LEVEL_REMINDERS secret)
 
 const PCO = "https://api.planningcenteronline.com/people/v2";
 
@@ -274,8 +275,12 @@ async function remember(me: Me, lang: string, extra: Record<string, unknown>) {
 // What finishing a level changes in the row.
 function stamp(level: number, a: Answers): Record<string, unknown> {
   const now = new Date().toISOString();
+  // Level 0 = the sign-up: remember the Level 1 date they chose (first Saturday of their start month).
+  if (level === 0) return { signup_at: now, ...(a.start ? { level1_on: isoDay(nthSat(Number(a.start.slice(0, 4)), Number(a.start.slice(5, 7)) - 1, 1)) } : {}) };
+  if (level === 1) return { level1_at: now };
   if (level === 2) return { level2_at: now };
   if (level === 3) return { level3_at: now, ...((a.gifts || []).length === 3 ? { gifts: a.gifts, gifts_at: now } : {}) };
+  if (level === 4) return { level4_at: now };
   return {};
 }
 
@@ -722,6 +727,74 @@ async function giftReminders(body: any, log: string[]) {
   log.push(`gift reminders (${mode}${dry ? ", dry run" : ""}): ${due} due, ${sent} sent`);
 }
 
+// ---------- session reminder texts: "Level N is this Saturday" (to people who ticked the optional text box) ----------
+// LEVEL_REMINDERS secret: "off" (default) | "test" | "live".
+//   test: texts go to the owner only (marked [TEST → name]), at most 3 per run, nothing is counted as sent.
+//   live: texts go to the participant. For the next session (a 1st-4th Saturday), at most 2 texts per person:
+//         the first on the Wednesday (3 days before), the second on the Friday (the day before). A missed run
+//         still sends the first text on the next day, and the second is always at least a day later.
+// Who gets one: the person's NEXT level is that session (signed up for that Level 1 month, or finished the
+// level before it), they finished their last step within 70 days, and they ticked the text box.
+// People who are missing their spiritual gifts before Level 3 get the gifts text instead (it has the date too).
+const PLACE = "The Journey Room";
+function levelMsg(lang: string, n: number, session: Date, tomorrow: boolean): string {
+  const loc = lang === "es" ? "es-US" : "en-US";
+  const md = session.toLocaleDateString(loc, { month: "short", day: "numeric", timeZone: "UTC" });
+  const link = `${APP_LINK(lang)}?level=${n}`;
+  return lang === "es"
+    ? `ARISE Miami: el Nivel ${n} de El Camino es ${tomorrow ? "mañana" : "este sábado"} (${md}) a las 9:00 AM en el Salón El Camino (${PLACE}). Abre la app para seguir la clase: ${link} Responde STOP para cancelar.`
+    : `ARISE Miami: Level ${n} of The Journey is ${tomorrow ? "tomorrow" : "this Saturday"} (${md}) at 9:00 AM in ${PLACE}. Open the app to follow along: ${link} Reply STOP to opt out.`;
+}
+async function levelReminders(body: any, log: string[]) {
+  const mode = (Deno.env.get("LEVEL_REMINDERS") || "off").trim().toLowerCase();
+  if (mode !== "test" && mode !== "live") return;
+  const today = miamiDay(0);
+  let toN = 0, session: Date | null = null;
+  for (let k = 1; k <= 3 && !session; k++) { const d = miamiDay(k); if (d.getUTCDay() === 6) { toN = k; session = d; } }
+  if (!session) return;                                   // no Saturday in the next three days
+  const n = satNo(session);
+  if (n < 1 || n > 4) return;                             // a 5th Saturday is always off
+  const dry = !!body.dry;
+  const dayOf = (iso: string) => new Date(new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso)) + "T00:00:00Z");
+  const giftsMode = (Deno.env.get("GIFT_REMINDERS") || "off").trim().toLowerCase();
+  const rows: any[] = await db("journey_people?select=*&sms_ok=eq.true&limit=1000");
+  const owner = mode === "test" ? await contactById(await defaultAssignee()) : null;
+  const nextOf = (r: any) => r.level4_at ? 0 : r.level3_at ? 4 : r.level2_at ? 3 : r.level1_at ? 2 : r.level1_on ? 1 : 0;
+  const lastAt = (r: any) => Math.max(0, ...[r.signup_at, r.level1_at, r.level2_at, r.level3_at, r.level4_at].filter(Boolean).map((x: string) => Date.parse(x)));
+  let due = 0, sent = 0;
+  for (const r of rows) {
+    if (nextOf(r) !== n) continue;
+    if (n === 1 && r.level1_on !== isoDay(session)) continue;        // they chose a different month
+    if (n > 1 && Date.now() - lastAt(r) > 70 * DAY_MS) continue;     // gone quiet: stop texting
+    const noGifts = n === 3 && !(r.gifts && r.gifts.length);
+    if (noGifts && (giftsMode === "test" || giftsMode === "live")) continue;   // the gifts reminder covers them
+    const cnt = r.rem_level === n ? (r.rem_count || 0) : 0;
+    const gap = r.rem_level === n && r.rem_at ? Math.round((+today - +dayOf(r.rem_at)) / DAY_MS) : 99;
+    if (!(cnt === 0 || (cnt === 1 && toN <= 1 && gap >= 1))) continue;
+    if (mode === "test" && due >= 3) break;
+    due++;
+    if (dry) continue;
+    const to = owner ? owner.phone : e164(r.phone || "");
+    if (!to) { log.push("level reminder: no usable number for one person"); continue; }
+    const msg = noGifts ? giftMsg(r.lang, session) : levelMsg(r.lang, n, session, toN <= 1);
+    const set = (patch: Record<string, unknown>) => db(`journey_people?email=eq.${encodeURIComponent(r.email)}`, {
+      method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify(patch),
+    });
+    try {
+      // Count it BEFORE texting, so a database hiccup can never cause a double text.
+      if (mode === "live") await set({ rem_level: n, rem_count: cnt + 1, rem_at: new Date().toISOString() });
+      const res = await sendText(to, owner ? `[TEST → ${r.first_name} ${r.last_name}] ${msg}` : msg);
+      if (res.startsWith("sent")) { sent++; continue; }
+      log.push(`level reminder failed: ${res}`);
+      if (mode === "live") {
+        if (/unsubscribed|blacklist|21610/i.test(res)) await set({ sms_ok: false });   // they replied STOP
+        else await set({ rem_level: r.rem_level ?? null, rem_count: r.rem_count || 0, rem_at: r.rem_at || null });
+      }
+    } catch (e) { log.push(`level reminder error: ${(e as Error).message.slice(0, 120)}`); }
+  }
+  log.push(`level reminders (${mode}${dry ? ", dry run" : ""}): Level ${n}, ${due} due, ${sent} sent`);
+}
+
 async function daily(body: any) {
   const act = alertsMode() !== "off" && !body.dry;
   const D = /^\d{4}-\d{2}-\d{2}$/.test(body.date || "") ? new Date(body.date + "T00:00:00Z") : miamiDay(-1);
@@ -732,6 +805,7 @@ async function daily(body: any) {
   await step("life group requests", () => groupRequestAlerts(act, log));
   await step("card nudges", () => cardNudges(act, log));
   await step("gift reminders", () => giftReminders(body, log));
+  await step("level reminders", () => levelReminders(body, log));
   return { ok: true, log };
 }
 
