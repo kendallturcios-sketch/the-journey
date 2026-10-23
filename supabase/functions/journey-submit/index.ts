@@ -663,7 +663,9 @@ async function cardNudges(act: boolean, log: string[]) {
 // ---------- spiritual-gifts reminder texts (to participants who ticked the optional text box) ----------
 // GIFT_REMINDERS secret: "off" (default) | "test" | "live".
 //   test: texts go to the owner only (marked [TEST → name]), at most 3 per run, nothing is counted as sent.
-//   live: texts go to the participant; at most 2 per person (3 days after Level 2, then 4 days later).
+//   live: texts go to the participant; at most 2 per person, in the week before THEIR Level 3 (the first third
+//         Saturday on or after they finished Level 2): the first 4 days before (Tuesday), the second 2 days
+//         before (Thursday) and at least 2 days after the first. Nothing on or after Level 3 day.
 // Only people who finished Level 2 within 21 days, haven't saved their gifts, and opted in are texted.
 const APP_LINK = (lang: string) => `https://kendallturcios-sketch.github.io/the-journey/${lang === "es" ? "es" : "en"}/participant/`;
 function e164(p: string): string {
@@ -683,14 +685,17 @@ async function giftReminders(body: any, log: string[]) {
   if (mode !== "test" && mode !== "live") return;
   const dry = !!body.dry;
   const rows: any[] = await db("journey_people?select=*&level2_at=not.is.null&level3_at=is.null&gifts=is.null&sms_ok=eq.true&remind_count=lt.2&order=level2_at.asc&limit=200");
-  const today = miamiDay(0), level3 = nextSession(3, today);
+  const today = miamiDay(0);
+  const miamiDate = (iso: string) => new Date(new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso)) + "T00:00:00Z");
   const owner = mode === "test" ? await contactById(await defaultAssignee()) : null;
   let due = 0, sent = 0;
   for (const r of rows) {
-    const age = daysSince(r.level2_at);
-    if (age > 21) continue;
-    const gap = r.reminded_at ? daysSince(r.reminded_at) : 99;
-    if (!(r.remind_count === 0 ? age >= 3 : gap >= 4)) continue;
+    if (daysSince(r.level2_at) > 21) continue;
+    const level3 = nextSession(3, miamiDate(r.level2_at));          // this person's Level 3
+    const toL3 = Math.round((+level3 - +today) / DAY_MS);          // days until it
+    if (toL3 < 1) continue;                                        // Level 3 is today or past: no more texts
+    const gap = r.reminded_at ? Math.round((+today - +miamiDate(r.reminded_at)) / DAY_MS) : 99;   // calendar days, so a few minutes of timing drift can't matter
+    if (!(r.remind_count === 0 ? toL3 <= 4 : (toL3 <= 2 && gap >= 2))) continue;
     if (mode === "test" && due >= 3) break;
     due++;
     if (dry) continue;
